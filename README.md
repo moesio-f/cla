@@ -55,18 +55,26 @@ The Python API provides a wrapper to the `cla` library by a Python package named
 The described relationship is depicted in the diagram below:
 
 ```mermaid
-flowchart TD
+flowchart LR
   cla("`cla`")
   pycla("`pycla`")
   cuda["CUDA code"]
 
-  cuda-.->|Static links| cla
+  cla-.->|Static links| cuda
   pycla==>|Dynamic loads| cla
 ```
 
 ## Directory structure
 
-TODO
+The source code is organized as follows:
+
+- [`build`](build): build-related files, not versioned by Git;
+- [`cla`](cla): source code for the C API;
+  - [`include`](cla/include): header files (i.e., `.h`, `.cuh`), has subdirectories for each module (e.g., `cuda`, `vector`, `matrix`);
+  - [`matrix`](cla/matrix): matrix module;
+  - [`vector`](cla/vector): vector module;
+  - [`cuda`](cla/cuda): CUDA related files (i.e., `.cu`);
+- [`pycla`](pycla): source code for the Python API;
 
 ## `cla`
 
