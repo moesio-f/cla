@@ -21,10 +21,12 @@ CLA is a simple toy library for basic vector/matrix operations in C. This projec
 # Features
 
 - C17 support, Python 3.13, CUDA 12.8;
+- Windows and Linux support;
 - Vector-vector operations;
 - Matrix-matrix operations;
 - Matrix-vector and vector-matrix operations;
 - Inversion, norms and orthogonalization;
+- Device selection to run operations;
 
 # Quick Start
 
@@ -52,7 +54,7 @@ The C API provides a shared library named `cla` to be used by other programs/lib
 
 The Python API provides a wrapper to the `cla` library by a Python package named `pycla`, which dynamics load the `cla` library during runtime. It is necessaary to have the CUDA runtime available to use CUDA-related functionanilty.
 
-The described relationship is depicted in the diagram below:
+The aforementioned relationship is depicted in the diagram below:
 
 ```mermaid
 flowchart LR
@@ -73,13 +75,37 @@ The source code is organized as follows:
   - [`include`](cla/include): header files (i.e., `.h`, `.cuh`), has subdirectories for each module (e.g., `cuda`, `vector`, `matrix`);
   - [`matrix`](cla/matrix): matrix module;
   - [`vector`](cla/vector): vector module;
-  - [`cuda`](cla/cuda): CUDA related files (i.e., `.cu`);
+  - [`cuda`](cla/cuda): CUDA related code;
 - [`pycla`](pycla): source code for the Python API;
 
-## `cla`
+## `cla` library
 
-TODO
+The following diagram shows the module/package organization.
 
-## `py-cla`
+```mermaid
+flowchart TD
+  vector("<strong>Vector Module</strong><br>Vector operations, norms, conversions.")
+  matrix("<strong>Matrix Module</strong><br>Matrix operations, norms, conversions, vector-matrix operations.")
+  cuda("<string>CUDA Module</strong><br> alternative operations for Matrix and Vectors with CUDA kernels.")
 
-TODO
+  subgraph cla
+  matrix -->|Uses for Matrix-Vector operations| vector
+  matrix -->|Uses for parallel operations| cuda
+  vector -->|Uses for parallel operations| cuda
+  end
+```
+
+## `pycla` library
+
+The following diagram shows the module/package organization.
+
+```mermaid
+flowchart TD
+  core("<strong>Core Module</strong><br>Core entities.")
+  cuda("<strong>CUDA Module</strong><br>Utilities for CUDA operations.")
+
+  subgraph pycla
+  core -->|Uses| cuda
+  end
+```
+
