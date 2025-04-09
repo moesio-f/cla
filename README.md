@@ -26,7 +26,9 @@ CLA is a simple toy library for basic vector/matrix operations in C. This projec
 - Matrix-matrix operations;
 - Matrix-vector and vector-matrix operations;
 - Inversion, norms and orthogonalization;
-- Device selection to run operations;
+- Device selection to run supported operations;
+- Get CUDA information from the system (i.e., support, number of devices, etc);
+- Management of memory (CPU memory vs GPU memory), allowing copies between devices;
 
 # Quick Start
 
