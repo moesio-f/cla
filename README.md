@@ -12,7 +12,7 @@
   <a href="#features">Features</a> •
   <a href="#quick-start">Quick Start</a> •
   <a href="#build">Build</a> •
-  <a href="#architecture-and-design">Architecture and Design</a>
+  <a href="#architecture">Architecture</a>
 </p>
 
 CLA is a simple toy library for basic vector/matrix operations in C. This project main goal is to learn the foundations of [CUDA](https://docs.nvidia.com/cuda/), and Python bindings, using [`ctypes`](https://docs.python.org/3/library/ctypes.html) as a wrapper, through simple Linear Algebra operations (additions, subtraction, multiplication, broadcasating, transformations, etc). 
@@ -44,6 +44,34 @@ TODO
 
 TODO
 
-# Architecture and Design
+# Architecture
+
+The library is organized as simply as possible. The goal is to make a slight distinction between the C and Python APIs, while allowing the core code with CUDA to be flexible.
+
+The C API provides a shared library named `cla` to be used by other programs/libraries during the linking stage or runtime. This C library is static linked to the CUDA kernel/functions during build.
+
+The Python API provides a wrapper to the `cla` library by a Python package named `pycla`, which dynamics load the `cla` library during runtime. It is necessaary to have the CUDA runtime available to use CUDA-related functionanilty.
+
+The described relationship is depicted in the diagram below:
+
+```mermaid
+flowchart TD
+  cla("`cla`")
+  pycla("`pycla`")
+  cuda["CUDA code"]
+
+  cuda-.->|Static links| cla
+  pycla==>|Dynamic loads| cla
+```
+
+## Directory structure
+
+TODO
+
+## `cla`
+
+TODO
+
+## `py-cla`
 
 TODO
