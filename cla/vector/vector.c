@@ -7,11 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Vector *vector_projection(Vector *a, Vector *b, Vector *dst) {
-  double scalar = vector_dot_product(a, b) / vector_dot_product(b, b);
-  return vector_mult_scalar(scalar, b, dst);
-}
-
 double vector_dot_product(Vector *a, Vector *b) {
   assert(a->dims == b->dims);
   double sum = 0.0;

@@ -21,7 +21,7 @@ int _TESTS_PASSED = 0;
 
 RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
                                                     Vector *),
-                               double a_value, double b_value,
+                               int dims, double a_value, double b_value,
                                double target_value, double tol) {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
@@ -47,15 +47,15 @@ RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
 }
 
 RETURN_CODE test_vector_add_cpu() {
-  return _test_vector_binop(&vector_add, 1.0, 1.0, 2.0, 0.001);
+  return _test_vector_binop(&vector_add, 10, 1.0, 1.0, 2.0, 0.001);
 }
 
 RETURN_CODE test_vector_sub_cpu() {
-  return _test_vector_binop(&vector_sub, 0.0, 1.0, -1.0, 0.001);
+  return _test_vector_binop(&vector_sub, 10, 0.0, 1.0, -1.0, 0.001);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cpu() {
-  return _test_vector_binop(&vector_element_wise_prod, 2.0, 3.0, 6.0,
+  return _test_vector_binop(&vector_element_wise_prod, 10, 2.0, 3.0, 6.0,
                             0.001);
 }
 
