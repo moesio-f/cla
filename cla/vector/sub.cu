@@ -20,22 +20,7 @@ __global__ void _cu_vector_sub(Vector *a, Vector *b, Vector *dst) {
 }
 
 extern "C" Vector *vector_sub(Vector *a, Vector *b, Vector *dst) {
-  // Vectors should be on same device
-  assert(a->device == b->device);
-
-  // Vectors should have same size
-  assert(a->dims == b->dims);
-
-  // Allocate dst if needed
-  dst = maybe_alloc_vector(dst, a->dims, a->device);
-
-  // Select implementation to run
-  if (a->device == NULL) {
-    _vector_sub(a, b, dst);
-  } else {
-    // TODO
-  }
-
-  // Return dst
-  return dst;
+  return cpu_gpu_conditional_apply_vector_operator(
+      &_vector_sub, NULL, &vec_same_dims_same_devices, a, b, dst, a->dims,
+      a->device);
 }

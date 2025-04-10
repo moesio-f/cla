@@ -9,7 +9,7 @@ CLA_TEST_TARGET := $(CLA_BUILD_PATH)/test_suite
 PYCLA_DIST := dist
 
 # Run all steps to build cla and pycla (TODO)
-all: clean prepare-cla compile-cla
+all: prepare-cla compile-cla
 
 # Create new target and run tests
 test: all test-cla
