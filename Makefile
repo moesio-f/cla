@@ -32,7 +32,8 @@ compile-cla:
 # Run cla tests
 test-cla:
 	@echo "[Makefile] Running test target..."
-	@./$(CLA_TEST_TARGET )
+	@chmod +x $(CLA_TEST_TARGET)
+	@./$(CLA_TEST_TARGET)
 
 # Compile for windows
 compile-windows:
