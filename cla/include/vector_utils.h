@@ -21,13 +21,6 @@ Vector *copy_vector(Vector *src, Vector *dst);
 // Print vector to stdout
 void print_vector(Vector *a, char *suffix);
 
-// Templates for vector operations
-Vector *cpu_gpu_conditional_apply_vector_operator(
-    void (*cpu_op)(Vector *, Vector *, Vector *),
-    void (*gpu_op)(Vector *, Vector *, Vector *), bool (*validate)(int, ...),
-    Vector *a, Vector *b, Vector *dst, int alloc_dims,
-    CUDADevice *alloc_device);
-
 // Validation functions. Accept a variable number
 //  of Vector* arguments.
 bool vec_same_dims_same_devices(int n, ...);

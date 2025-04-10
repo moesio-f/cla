@@ -78,29 +78,6 @@ void print_vector(Vector *a, char *suffix) {
   }
 }
 
-Vector *
-cpu_gpu_conditional_apply_vector_operator(void (*cpu_op)(Vector *, Vector *, Vector *),
-                                   void (*gpu_op)(Vector *, Vector *, Vector *),
-                                   bool (*validate)(int, ...), Vector *a,
-                                   Vector *b, Vector *dst, int alloc_dims,
-                                   CUDADevice *alloc_device) {
-  // Allocate destination Vector if needed
-  dst = maybe_alloc_vector(dst, alloc_dims, alloc_device);
-
-  // Assert pre-conditions
-  assert(validate(3, a, b, dst));
-
-  // Apply operation
-  if (a->device == NULL) {
-    cpu_op(a, b, dst);
-  } else {
-    gpu_op(a, b, dst);
-  }
-
-  // Return dst
-  return dst;
-}
-
 bool vec_same_dims_same_devices(int n, ...) {
   // Early return
   if (n < 2) {

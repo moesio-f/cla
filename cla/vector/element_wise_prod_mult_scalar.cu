@@ -1,4 +1,5 @@
 extern "C" {
+#include "../include/cuda_utils.h"
 #include "../include/entities.h"
 #include "../include/vector_operations.h"
 #include "../include/vector_utils.h"

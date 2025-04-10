@@ -1,8 +1,8 @@
 extern "C" {
+#include "../include/cuda_utils.h"
 #include "../include/entities.h"
 #include "../include/vector_operations.h"
 #include "../include/vector_utils.h"
-#include <assert.h>
 }
 __host__ __device__ void _vector_sub(Vector *a, Vector *b, Vector *dst) {
 #if defined(__CUDA__ARCH__)
