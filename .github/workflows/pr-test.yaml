@@ -25,6 +25,9 @@ jobs:
           version: latest
           platform: x64
 
+      - name: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.22
+
       - name: Setup CMake and Ninja
         uses: lukka/get-cmake@v4.0.0
         with:
