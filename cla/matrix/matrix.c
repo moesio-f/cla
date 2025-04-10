@@ -1,6 +1,7 @@
 #include "../include/entities.h"
 #include "../include/matrix_operations.h"
 #include "../include/vector_operations.h"
+#include "../include/vector_utils.h"
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>

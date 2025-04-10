@@ -1,22 +1,6 @@
 #ifndef CLA_VECTOR
 #define CLA_VECTOR
 #include "entities.h"
-#include <stdbool.h>
-
-// Vector constructor
-Vector *const_vector(int dims, double value, CUDADevice *device);
-
-// Vector from literals
-Vector *create_vector(int dims, CUDADevice *device, ...);
-
-// Clean up vector from either CUDA or CPU
-void destroy_vector(Vector *vector);
-
-// Copy vector from src to dst (if NULL, automatically allocates memory)
-Vector *copy_vector(Vector *src, Vector *dst);
-
-// Print vector to stdout
-void print_vector(Vector *a, char *suffix);
 
 // Vector operations, vectors must be on same device.
 // If `dst` is NULL, allocate new vector with same device as `a`
