@@ -20,6 +20,6 @@ double vector_angle_between_rad(Vector *a, Vector *b);
 // Comparisons (returns are always on CPU)
 bool vector_equals(Vector *a, Vector *b);
 bool vector_orthogonal(Vector *a, Vector *b);
-bool vector_orthornormal(Vector *a, Vector *b);
+bool vector_orthonormal(Vector *a, Vector *b);
 
 #endif

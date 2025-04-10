@@ -114,6 +114,21 @@ RETURN_CODE test_vector_max_norm() {
   return code;
 }
 
+RETURN_CODE test_vector_equals() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+  Vector *a = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
+  Vector *b = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
+
+  if (vector_equals(a, b)) {
+    code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  destroy_vector(a);
+  return code;
+}
+
 int main() {
   test_vector_add_cpu();
   test_vector_sub_cpu();
@@ -122,6 +137,7 @@ int main() {
   test_vector_l2_norm();
   test_vector_lp_norm();
   test_vector_max_norm();
+  test_vector_equals();
   printf("Total tests: %d | Tests passed: %d | Tests failed: %d\n", _TESTS_RUN,
          _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;
