@@ -4,6 +4,7 @@
  *
  * */
 #include <assert.h>
+#include <stdio.h>
 
 int main() {
   assert(1 == 1);
