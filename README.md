@@ -76,7 +76,7 @@ The source code is organized as follows:
   - [`include`](cla/include): header files (i.e., `.h`, `.cuh`), has subdirectories for each module (e.g., `cuda`, `vector`, `matrix`);
   - [`matrix`](cla/matrix): matrix module;
   - [`vector`](cla/vector): vector module;
-  - [`cuda`](cla/cuda): CUDA related code;
+  - [`cuda`](cla/cuda): CUDA management code;
 - [`pycla`](pycla): source code for the Python API;
   - [`bin`](pycla/bin): binary directory for the `cla` shared library;
 

@@ -1,4 +1,6 @@
-#include "../include/matrix.h"
+#include "../include/entities.h"
+#include "../include/matrix_operations.h"
+#include "../include/vector_operations.h"
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
@@ -14,18 +16,20 @@ void assert_compatible_shape(Matrix *a, Matrix *b) {
   assert(a->columns == b->rows);
 }
 
-Matrix *maybe_alloc_matrix(Matrix *ptr, int rows, int columns) {
+Matrix *maybe_alloc_matrix(Matrix *ptr, int rows, int columns,
+                           CUDADevice *device) {
   if (ptr == NULL) {
-    ptr = const_matrix(rows, columns, 0.0);
+    ptr = const_matrix(rows, columns, 0.0, device);
   }
 
   return ptr;
 }
 
-Matrix *const_matrix(int rows, int columns, double value) {
+Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device) {
   Matrix *matrix = (Matrix *)malloc(sizeof(Matrix));
   matrix->rows = rows;
   matrix->columns = columns;
+  matrix->device = device;
 
   // Initializing array
   double **vectors = (double **)malloc(rows * sizeof(double *));
@@ -53,7 +57,7 @@ void destroy_matrix(Matrix *matrix) {
 Matrix *copy_matrix(Matrix *a, Matrix *dst) {
   int rows = a->rows;
   int columns = a->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns);
+  dst = maybe_alloc_matrix(dst, rows, columns, a->device);
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
@@ -80,27 +84,25 @@ void print_matrix(Matrix *a, char *suffix) {
   }
 }
 
-Matrix *matrix_from_vector(Vector *a, bool copy) {
-  Matrix *matrix = const_matrix(1, a->dims, 0.0);
+Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
+  Matrix *matrix = const_matrix(1, a->dims, 0.0, a->device);
   double *target = a->arr;
 
-  // Create copy of original array if needed
-  if (copy) {
-    target = (double *)malloc(a->dims * sizeof(double));
-    for (int i = 0; i < a->dims; i++) {
-      target[i] = a->arr[i];
-    }
+  // Create copy of original array
+  target = (double *)malloc(a->dims * sizeof(double));
+  for (int i = 0; i < a->dims; i++) {
+    target[i] = a->arr[i];
   }
 
   matrix->arr[0] = target;
   return matrix;
 }
 
-Matrix *add_matrix(Matrix *a, Matrix *b, Matrix *dst) {
+Matrix *matrix_add(Matrix *a, Matrix *b, Matrix *dst) {
   assert_same_shape(a, b);
   int rows = a->rows;
   int columns = a->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns);
+  dst = maybe_alloc_matrix(dst, rows, columns, a->device);
 
   // Apply operation
   for (int i = 0; i < rows; i++) {
@@ -112,11 +114,11 @@ Matrix *add_matrix(Matrix *a, Matrix *b, Matrix *dst) {
   return dst;
 }
 
-Matrix *sub_matrix(Matrix *a, Matrix *b, Matrix *dst) {
+Matrix *matrix_sub(Matrix *a, Matrix *b, Matrix *dst) {
   assert_same_shape(a, b);
   int rows = a->rows;
   int columns = a->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns);
+  dst = maybe_alloc_matrix(dst, rows, columns, a->device);
 
   // Apply operation
   for (int i = 0; i < rows; i++) {
@@ -128,9 +130,9 @@ Matrix *sub_matrix(Matrix *a, Matrix *b, Matrix *dst) {
   return dst;
 }
 
-Matrix *mult_matrix(Matrix *a, Matrix *b) {
+Matrix *matrix_mult(Matrix *a, Matrix *b) {
   assert_compatible_shape(a, b);
-  Matrix *dst = const_matrix(a->rows, b->columns, 0.0);
+  Matrix *dst = const_matrix(a->rows, b->columns, 0.0, a->device);
 
   // Apply operation
   for (int i = 0; i < dst->rows; i++) {
@@ -150,7 +152,7 @@ Matrix *mult_matrix(Matrix *a, Matrix *b) {
 
 Vector *mult_matrix_by_vector(Matrix *a, Vector *b) {
   assert(a->columns == b->dims);
-  Vector *dst = const_vector(a->rows, b->type, 0.0);
+  Vector *dst = const_vector(a->rows, 0.0, a->device);
 
   for (int i = 0; i < dst->dims; i++) {
     double sum = 0.0;
@@ -164,10 +166,10 @@ Vector *mult_matrix_by_vector(Matrix *a, Vector *b) {
   return dst;
 }
 
-Matrix *scalar_mult_matrix(float a, Matrix *b, Matrix *dst) {
+Matrix *matrix_mult_scalar(double a, Matrix *b, Matrix *dst) {
   int rows = b->rows;
   int columns = b->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns);
+  dst = maybe_alloc_matrix(dst, rows, columns, b->device);
 
   // Apply operation
   for (int i = 0; i < rows; i++) {
@@ -177,62 +179,4 @@ Matrix *scalar_mult_matrix(float a, Matrix *b, Matrix *dst) {
   }
 
   return dst;
-}
-
-Matrix *inverse(Matrix *a, Matrix *dst) {
-  double det = determinant(a);
-  assert(fabs(det) > 1e-8);
-  dst = maybe_alloc_matrix(NULL, a->rows, a->columns);
-
-  // Obtaining matrix entries
-  double a_ = a->arr[0][0];
-  double b = a->arr[0][1];
-  double c = a->arr[0][2];
-  double d = a->arr[1][0];
-  double e = a->arr[1][1];
-  double f = a->arr[1][2];
-  double g = a->arr[2][0];
-  double h = a->arr[2][1];
-  double i = a->arr[2][2];
-
-  // Setting the values of new matrix
-  dst->arr[0][0] = e * i - f * h;
-  dst->arr[0][1] = -(d * i - f * g);
-  dst->arr[0][2] = d * h - e * g;
-  dst->arr[1][0] = -(b * i - c * h);
-  dst->arr[1][1] = a_ * i - c * g;
-  dst->arr[1][2] = -(a_ * h - b * g);
-  dst->arr[2][0] = b * f - c * e;
-  dst->arr[2][1] = -(a_ * f - c * d);
-  dst->arr[2][2] = a_ * e - b * d;
-
-  // Divide by determinant to get the inverse
-  dst = scalar_mult_matrix(1.0 / det, dst, dst);
-  return dst;
-}
-
-double determinant(Matrix *a) {
-  assert(a->rows == a->columns && a->rows == 3);
-
-  // Obtaining matrix entries
-  double a_ = a->arr[0][0];
-  double b = a->arr[0][1];
-  double c = a->arr[0][2];
-  double d = a->arr[1][0];
-  double e = a->arr[1][1];
-  double f = a->arr[1][2];
-  double g = a->arr[2][0];
-  double h = a->arr[2][1];
-  double i = a->arr[2][2];
-
-  // Obtaining terms
-  double term1 = a_ * e * i;
-  double term2 = b * f * g;
-  double term3 = c * d * h;
-  double term4 = c * e * g;
-  double term5 = b * d * i;
-  double term6 = a_ * f * h;
-
-  // Obtain the determinant
-  return term1 + term2 + term3 - term4 - term5 - term6;
 }
