@@ -7,17 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Vector *vector_sub(Vector *a, Vector *b, Vector *dst) {
-  assert(a->dims == b->dims);
-  dst = maybe_alloc_vector(dst, a->dims, a->device);
-
-  for (int i = 0; i < dst->dims; i++) {
-    dst->arr[i] = a->arr[i] - b->arr[i];
-  }
-
-  return dst;
-}
-
 Vector *vector_element_wise_prod(Vector *a, Vector *b, Vector *dst) {
   assert(a->dims == b->dims);
   dst = maybe_alloc_vector(dst, a->dims, a->device);
