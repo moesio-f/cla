@@ -6,7 +6,7 @@ extern "C" {
 }
 __host__ __device__ void _vector_add(Vector *a, Vector *b, Vector *dst) {
 #if defined(__CUDA__ARCH__)
-  int i - threadIdx.x;
+  int i = threadIdx.x;
   dst->arr[i] = a->arr[i] + b->arr[i];
 #else
   for (int i = 0; i < a->dims; i++) {
