@@ -7,27 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Vector *vector_element_wise_prod(Vector *a, Vector *b, Vector *dst) {
-  assert(a->dims == b->dims);
-  dst = maybe_alloc_vector(dst, a->dims, a->device);
-
-  for (int i = 0; i < dst->dims; i++) {
-    dst->arr[i] = a->arr[i] * b->arr[i];
-  }
-
-  return dst;
-}
-
-Vector *vector_mult_scalar(double a, Vector *b, Vector *dst) {
-  dst = maybe_alloc_vector(dst, b->dims, b->device);
-
-  for (int i = 0; i < dst->dims; i++) {
-    dst->arr[i] = a * b->arr[i];
-  }
-
-  return dst;
-}
-
 Vector *vector_projection(Vector *a, Vector *b, Vector *dst) {
   double scalar = vector_dot_product(a, b) / vector_dot_product(b, b);
   return vector_mult_scalar(scalar, b, dst);

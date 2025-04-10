@@ -54,9 +54,15 @@ RETURN_CODE test_vector_sub_cpu() {
   return _test_vector_binop(&vector_sub, 0.0, 1.0, -1.0, 0.001);
 }
 
+RETURN_CODE test_vector_element_wise_prod_cpu() {
+  return _test_vector_binop(&vector_element_wise_prod, 2.0, 3.0, 6.0,
+                            0.001);
+}
+
 int main() {
   test_vector_add_cpu();
   test_vector_sub_cpu();
+  test_vector_element_wise_prod_cpu();
   printf("Total tests: %d | Tests passed: %d | Tests failed: %d\n", _TESTS_RUN,
          _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;

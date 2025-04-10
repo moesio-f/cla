@@ -8,7 +8,7 @@ Vector *vector_add(Vector *a, Vector *b, Vector *dst);
 Vector *vector_sub(Vector *a, Vector *b, Vector *dst);
 Vector *vector_mult_scalar(double a, Vector *b, Vector *dst);
 Vector *vector_projection(Vector *a, Vector *b, Vector *dst);
-Vector *vector_element_wise_product(Vector *a, Vector *b, Vector *dst);
+Vector *vector_element_wise_prod(Vector *a, Vector *b, Vector *dst);
 
 // Operations that produce double (returns are always on CPU)
 double vector_dot_product(Vector *a, Vector *b);
