@@ -7,17 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double vector_dot_product(Vector *a, Vector *b) {
-  assert(a->dims == b->dims);
-  double sum = 0.0;
-
-  for (int i = 0; i < a->dims; i++) {
-    sum += a->arr[i] * b->arr[i];
-  }
-
-  return sum;
-}
-
 double vector_l2_norm(Vector *a) { return sqrt(vector_dot_product(a, a)); }
 
 bool vector_equals(Vector *a, Vector *b) {
