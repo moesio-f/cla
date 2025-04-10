@@ -73,11 +73,55 @@ RETURN_CODE test_vector_dot_product_cpu() {
   return code;
 }
 
+RETURN_CODE test_vector_l2_norm() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+  Vector *a = const_vector(2, 2.0, NULL);
+  if (fabs(vector_l2_norm(a) - sqrt(8.0)) <= 0.001) {
+    code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  destroy_vector(a);
+  return code;
+}
+
+RETURN_CODE test_vector_lp_norm() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+  Vector *a = const_vector(2, 3.0, NULL);
+
+  if (fabs(vector_lp_norm(a, 1.0) - 6.0) <= 0.001) {
+    code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  destroy_vector(a);
+  return code;
+}
+
+RETURN_CODE test_vector_max_norm() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+  Vector *a = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
+
+  if (fabs(vector_max_norm(a) - 10.0) <= 0.001) {
+    code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  destroy_vector(a);
+  return code;
+}
+
 int main() {
   test_vector_add_cpu();
   test_vector_sub_cpu();
   test_vector_element_wise_prod_cpu();
   test_vector_dot_product_cpu();
+  test_vector_l2_norm();
+  test_vector_lp_norm();
+  test_vector_max_norm();
   printf("Total tests: %d | Tests passed: %d | Tests failed: %d\n", _TESTS_RUN,
          _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;

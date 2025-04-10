@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-double vector_l2_norm(Vector *a) { return sqrt(vector_dot_product(a, a)); }
-
 bool vector_equals(Vector *a, Vector *b) {
   assert(a->dims == b->dims);
 
