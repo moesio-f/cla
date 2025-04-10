@@ -1,0 +1,5 @@
+graft pycla
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.gitkeep
+global-exclude *.egg-info
