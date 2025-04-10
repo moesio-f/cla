@@ -3,5 +3,5 @@
 This test should always pass.
 """
 
-def dummy_test():
-    return True
+def test_dummy():
+    assert True
