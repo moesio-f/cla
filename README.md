@@ -88,7 +88,7 @@ The following diagram shows the module/package organization.
 flowchart TD
   vector("<strong>Vector Module</strong><br>Vector operations, norms, conversions.")
   matrix("<strong>Matrix Module</strong><br>Matrix operations, norms, conversions, vector-matrix operations.")
-  cuda("<string>CUDA Module</strong><br> alternative operations for Matrix and Vectors with CUDA kernels.")
+  cuda("<strong>CUDA Module</strong><br> alternative operations for Matrix and Vectors with CUDA kernels.")
 
   subgraph cla
   matrix -->|Uses for Matrix-Vector operations| vector
