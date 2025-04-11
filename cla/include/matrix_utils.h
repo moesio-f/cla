@@ -26,5 +26,6 @@ void print_matrix(Matrix *a, char *suffix);
 bool matrix_same_dims_same_devices(int n, ...);
 bool matrix_mult_compat(int n, ...);
 bool matrix_vector_mult_compat(Matrix *a, Vector *b, Matrix *dst);
+bool matrix_square(Matrix *a);
 
 #endif

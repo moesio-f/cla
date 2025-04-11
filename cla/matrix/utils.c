@@ -143,3 +143,5 @@ bool matrix_vector_mult_compat(Matrix *a, Vector *b, Matrix *dst) {
   return a->device == b->device && b->device == dst->device &&
          a->columns == b->dims && dst->rows == b->dims && dst->columns == 1;
 }
+
+bool matrix_square(Matrix *a) { return a->rows == a->columns; }

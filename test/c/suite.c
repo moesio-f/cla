@@ -13,7 +13,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 12
+#define N_TESTS 15
 #define RED "\x1B[31m"
 #define GRN "\x1B[32m"
 #define YEL "\x1B[33m"
@@ -233,6 +233,51 @@ RETURN_CODE test_matrix_mult_scalar_cpu() {
   return code;
 }
 
+RETURN_CODE test_matrix_trace() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+
+  double a_1[2] = {1.0, 1.0}, a_2[2] = {2.0, 2.0};
+  Matrix a = {(double *[2]){a_1, a_2}, 2, 2, NULL};
+
+  if (fabs(matrix_trace(&a) - 3.0) <= 0.0001) {
+    _TESTS_PASSED++;
+    code = SUCCESS;
+  }
+
+  return code;
+}
+
+RETURN_CODE test_matrix_lpq_norm() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+
+  double a_1[2] = {1.0, 1.0}, a_2[2] = {2.0, 2.0};
+  Matrix a = {(double *[2]){a_1, a_2}, 2, 2, NULL};
+
+  if (fabs(matrix_lpq_norm(&a, 1.0, 1.0) - 6.0) <= 0.0001) {
+    _TESTS_PASSED++;
+    code = SUCCESS;
+  }
+
+  return code;
+}
+
+RETURN_CODE test_matrix_frobenius_norm() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+
+  double a_1[2] = {1.0, 1.0}, a_2[2] = {2.0, 2.0};
+  Matrix a = {(double *[2]){a_1, a_2}, 2, 2, NULL};
+
+  if (fabs(matrix_frobenius_norm(&a) - 3.1623) <= 0.0001) {
+    _TESTS_PASSED++;
+    code = SUCCESS;
+  }
+
+  return code;
+}
+
 int main() {
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
@@ -245,7 +290,10 @@ int main() {
                                            &test_matrix_add_cpu,
                                            &test_matrix_sub_cpu,
                                            &test_matrix_mult_cpu,
-                                           &test_matrix_mult_scalar_cpu};
+                                           &test_matrix_mult_scalar_cpu,
+                                           &test_matrix_trace,
+                                           &test_matrix_lpq_norm,
+                                           &test_matrix_frobenius_norm};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -257,7 +305,10 @@ int main() {
                              "test_matrix_add_cpu",
                              "test_matrix_sub_cpu",
                              "test_matrix_mult_cpu",
-                             "test_matrix_mult_scalar_cpu"};
+                             "test_matrix_mult_scalar_cpu",
+                             "test_matrix_trace",
+                             "test_matrix_lpq_norm",
+                             "test_frobenius_norm"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
