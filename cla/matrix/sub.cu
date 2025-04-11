@@ -22,6 +22,6 @@ __global__ void _cu_matrix_sub(Matrix *a, Matrix *b, Matrix *dst) {
 
 extern "C" Matrix *matrix_sub(Matrix *a, Matrix *b, Matrix *dst) {
   return cpu_gpu_conditional_apply_matrix_operator(
-      &_matrix_sub, NULL, &matrix_same_dims_same_devices, a, b, dst, a->rows,
-      a->columns, a->device);
+      &_matrix_sub, NULL, &matrix_has_same_dims_same_devices, a, b, dst,
+      a->rows, a->columns, a->device);
 }

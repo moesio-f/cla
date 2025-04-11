@@ -23,7 +23,7 @@ __global__ void _cu_vector_element_wise_prod(Vector *a, Vector *b,
 
 extern "C" Vector *vector_element_wise_prod(Vector *a, Vector *b, Vector *dst) {
   return cpu_gpu_conditional_apply_vector_operator(
-      &_vector_element_wise_prod, NULL, &vec_same_dims_same_devices, a, b, dst,
+      &_vector_element_wise_prod, NULL, &vector_has_same_dims_same_devices, a, b, dst,
       a->dims, a->device);
 }
 

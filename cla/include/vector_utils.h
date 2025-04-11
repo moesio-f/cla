@@ -21,8 +21,7 @@ Vector *copy_vector(Vector *src, Vector *dst);
 // Print vector to stdout
 void print_vector(Vector *a, char *suffix);
 
-// Validation functions. Accept a variable number
-//  of Vector* arguments.
-bool vec_same_dims_same_devices(int n, ...);
+// Validation functions.
+bool vector_has_same_dims_same_devices(Vector *a, Vector *b, Vector *dst);
 
 #endif

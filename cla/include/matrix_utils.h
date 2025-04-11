@@ -22,10 +22,9 @@ Matrix *copy_matrix(Matrix *a, Matrix *dst);
 // Print matrix to stdout
 void print_matrix(Matrix *a, char *suffix);
 
-// Validation functions.
-bool matrix_same_dims_same_devices(int n, ...);
-bool matrix_mult_compat(int n, ...);
-bool matrix_vector_mult_compat(Matrix *a, Vector *b, Matrix *dst);
-bool matrix_square(Matrix *a);
+// Validation functions
+bool matrix_has_same_dims_same_devices(Matrix *a, Matrix *b, Matrix *dst);
+bool matrix_is_mult_compat(Matrix *a, Matrix *b, Matrix *dst);
+bool matrix_is_square(Matrix *a);
 
 #endif
