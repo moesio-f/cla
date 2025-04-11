@@ -13,7 +13,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 10
+#define N_TESTS 12
 #define RED "\x1B[31m"
 #define GRN "\x1B[32m"
 #define YEL "\x1B[33m"
@@ -204,6 +204,35 @@ RETURN_CODE test_matrix_sub_cpu() {
                             0.001);
 }
 
+RETURN_CODE test_matrix_mult_cpu() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {2.0, 2.0};
+  double t_1[2] = {2.0, 2.0}, t_2[2] = {11.0, 11.0};
+
+  return _test_matrix_binop(&matrix_mult, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            0.001);
+}
+
+RETURN_CODE test_matrix_mult_scalar_cpu() {
+  _TESTS_RUN++;
+  RETURN_CODE code = FAILED;
+  double a = 2.0;
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {2.0, 2.0};
+  double t_1[2] = {2.0, 2.0}, t_2[2] = {4.0, 4.0};
+
+  Matrix b = {(double *[2]){b_1, b_2}, 2, 2, NULL};
+  Matrix t = {(double *[2]){t_1, t_2}, 2, 2, NULL};
+  Matrix *dst = matrix_mult_scalar(a, &b, NULL);
+  if (matrix_equals(dst, &t)) {
+    _TESTS_PASSED++;
+    code = SUCCESS;
+  }
+
+  destroy_matrix(dst);
+  return code;
+}
+
 int main() {
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
@@ -214,7 +243,9 @@ int main() {
                                            &test_vector_max_norm,
                                            &test_vector_equals,
                                            &test_matrix_add_cpu,
-                                           &test_matrix_sub_cpu};
+                                           &test_matrix_sub_cpu,
+                                           &test_matrix_mult_cpu,
+                                           &test_matrix_mult_scalar_cpu};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -224,7 +255,9 @@ int main() {
                              "test_vector_max_norm",
                              "test_vector_equals",
                              "test_matrix_add_cpu",
-                             "test_matrix_sub_cpu"};
+                             "test_matrix_sub_cpu",
+                             "test_matrix_mult_cpu",
+                             "test_matrix_mult_scalar_cpu"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {

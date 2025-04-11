@@ -22,9 +22,9 @@ Matrix *copy_matrix(Matrix *a, Matrix *dst);
 // Print matrix to stdout
 void print_matrix(Matrix *a, char *suffix);
 
-// Validation functions. Accept a variable number
-//  of Matrix* arguments.
+// Validation functions.
 bool matrix_same_dims_same_devices(int n, ...);
 bool matrix_mult_compat(int n, ...);
+bool matrix_vector_mult_compat(Matrix *a, Vector *b, Matrix *dst);
 
 #endif

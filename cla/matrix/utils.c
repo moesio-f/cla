@@ -117,3 +117,29 @@ bool matrix_same_dims_same_devices(int n, ...) {
   va_end(args);
   return status;
 }
+
+bool matrix_mult_compat(int n, ...) {
+  // Early return, this function only supports
+  //    3 arguments call
+  if (n != 3) {
+    return false;
+  }
+
+  // Obtain a, b, and dst matrices
+  va_list args;
+  va_start(args, n);
+  Matrix *a = va_arg(args, Matrix *);
+  Matrix *b = va_arg(args, Matrix *);
+  Matrix *dst = va_arg(args, Matrix *);
+  va_end(args);
+
+  // Checking whether multiplication is possible
+  return a->device == b->device && b->device == dst->device &&
+         a->columns == b->rows && dst->rows == a->rows &&
+         dst->columns == b->columns;
+}
+
+bool matrix_vector_mult_compat(Matrix *a, Vector *b, Matrix *dst) {
+  return a->device == b->device && b->device == dst->device &&
+         a->columns == b->dims && dst->rows == b->dims && dst->columns == 1;
+}

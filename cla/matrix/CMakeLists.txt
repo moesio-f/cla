@@ -1,1 +1,1 @@
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE matrix.c utils.c add.cu sub.cu)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE utils.c add.cu sub.cu comparisons.c mult.cu mult_scalar.cu)
