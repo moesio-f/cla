@@ -76,16 +76,25 @@ void print_matrix(Matrix *a, char *suffix) {
 }
 
 Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
-  Matrix *matrix = const_matrix(1, a->dims, 0.0, a->device);
-  double *target = a->arr;
-
-  // Create copy of original array
-  target = (double *)malloc(a->dims * sizeof(double));
-  for (int i = 0; i < a->dims; i++) {
-    target[i] = a->arr[i];
+  int rows = 1, columns = a->dims;
+  if (strategy == Vector2MatrixStrategy_COLUMN) {
+    rows = a->dims;
+    columns = 1;
   }
 
-  matrix->arr[0] = target;
+  Matrix *matrix = const_matrix(rows, columns, 0.0, a->device);
+  double *target = a->arr;
+
+  // Assign values
+  if (strategy == Vector2MatrixStrategy_ROW) {
+    for (int i = 0; i < a->dims; i++) {
+      matrix->arr[0][i] = a->arr[i];
+    }
+  } else {
+    for (int i = 0; i < a->dims; i++) {
+      matrix->arr[i][0] = a->arr[i];
+    }
+  }
   return matrix;
 }
 
