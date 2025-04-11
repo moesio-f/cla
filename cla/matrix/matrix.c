@@ -18,22 +18,6 @@ void assert_compatible_shape(Matrix *a, Matrix *b) {
   assert(a->columns == b->rows);
 }
 
-Matrix *matrix_add(Matrix *a, Matrix *b, Matrix *dst) {
-  assert_same_shape(a, b);
-  int rows = a->rows;
-  int columns = a->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns, a->device);
-
-  // Apply operation
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < columns; j++) {
-      dst->arr[i][j] = a->arr[i][j] + b->arr[i][j];
-    }
-  }
-
-  return dst;
-}
-
 Matrix *matrix_sub(Matrix *a, Matrix *b, Matrix *dst) {
   assert_same_shape(a, b);
   int rows = a->rows;

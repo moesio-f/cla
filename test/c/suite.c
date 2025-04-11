@@ -5,6 +5,8 @@
  *
  * */
 #include "../../cla/include/entities.h"
+#include "../../cla/include/matrix_operations.h"
+#include "../../cla/include/matrix_utils.h"
 #include "../../cla/include/vector_operations.h"
 #include "../../cla/include/vector_utils.h"
 #include <assert.h>
@@ -21,82 +23,128 @@ int _TESTS_PASSED = 0;
 
 RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
                                                     Vector *),
-                               int dims, double a_value, double b_value,
-                               double target_value, double tol) {
+                               int dims, double *a_value, double *b_value,
+                               double *target_value, double tol) {
   _TESTS_RUN++;
-  RETURN_CODE code = FAILED;
+  RETURN_CODE code = SUCCESS;
+
   // Vector allocation
-  Vector *a = create_vector(1, NULL, a_value);
-  Vector *b = create_vector(1, NULL, b_value);
+  Vector a = {a_value, dims, NULL};
+  Vector b = {b_value, dims, NULL};
 
   // Operation
-  Vector *result = operation(a, b, NULL);
+  Vector *result = operation(&a, &b, NULL);
 
   // Validation
-  if (fabs(result->arr[0] - target_value) <= tol) {
-    code = SUCCESS;
+  for (int i = 0; i < dims; i++) {
+    if (fabs(result->arr[i] - target_value[i]) > tol) {
+      code = FAILED;
+      break;
+    }
+  }
+
+  if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
   // Clean-up
-  destroy_vector(a);
-  destroy_vector(b);
   destroy_vector(result);
 
   return code;
 }
 
+RETURN_CODE
+_test_matrix_binop(Matrix *(*operation)(Matrix *, Matrix *, Matrix *), int rows,
+                   int columns, double **a_value, double **b_value,
+                   double **target_value, double tol) {
+  _TESTS_RUN++;
+  RETURN_CODE code = SUCCESS;
+
+  // Matrix allocation
+  Matrix a = {a_value, rows, columns, NULL};
+  Matrix b = {b_value, rows, columns, NULL};
+
+  // Operation
+  Matrix *result = operation(&a, &b, NULL);
+
+  // Validation
+  for (int i = 0; i < rows; i++) {
+    for (int j = 0; j < columns; j++) {
+      if (fabs(result->arr[i][j] - target_value[i][j]) > tol) {
+        code = FAILED;
+        break;
+      }
+    }
+  }
+
+  if (code == SUCCESS) {
+    _TESTS_PASSED++;
+  }
+
+  // Clean-up dynamically allocated matrices
+  destroy_matrix(result);
+
+  return code;
+}
+
 RETURN_CODE test_vector_add_cpu() {
-  return _test_vector_binop(&vector_add, 10, 1.0, 1.0, 2.0, 0.001);
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {2.0, 1.5};
+
+  return _test_vector_binop(&vector_add, 2, a, b, target, 0.001);
 }
 
 RETURN_CODE test_vector_sub_cpu() {
-  return _test_vector_binop(&vector_sub, 10, 0.0, 1.0, -1.0, 0.001);
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {0.0, -0.5};
+
+  return _test_vector_binop(&vector_sub, 2, a, b, target, 0.001);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cpu() {
-  return _test_vector_binop(&vector_element_wise_prod, 10, 2.0, 3.0, 6.0,
-                            0.001);
+  double a[2] = {3.0, -0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {3.0, -0.5};
+
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, 0.001);
 }
 
 RETURN_CODE test_vector_dot_product_cpu() {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
-  Vector *a = const_vector(2, 2.0, NULL);
-
-  if (fabs(vector_dot_product(a, a) - 8.0) <= 0.001) {
+  Vector a = {(double[2]){2.0, 2.0}, 2, NULL};
+  if (fabs(vector_dot_product(&a, &a) - 8.0) <= 0.001) {
     code = SUCCESS;
     _TESTS_PASSED++;
   }
 
-  destroy_vector(a);
   return code;
 }
 
 RETURN_CODE test_vector_l2_norm() {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
-  Vector *a = const_vector(2, 2.0, NULL);
-  if (fabs(vector_l2_norm(a) - sqrt(8.0)) <= 0.001) {
+  Vector a = {(double[2]){2.0, 2.0}, 2, NULL};
+  if (fabs(vector_l2_norm(&a) - sqrt(8.0)) <= 0.001) {
     code = SUCCESS;
     _TESTS_PASSED++;
   }
 
-  destroy_vector(a);
   return code;
 }
 
 RETURN_CODE test_vector_lp_norm() {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
-  Vector *a = const_vector(2, 3.0, NULL);
+  Vector a = {(double[2]){3.0, 3.0}, 2, NULL};
 
-  if (fabs(vector_lp_norm(a, 1.0) - 6.0) <= 0.001) {
+  if (fabs(vector_lp_norm(&a, 1.0) - 6.0) <= 0.001) {
     code = SUCCESS;
     _TESTS_PASSED++;
   }
 
-  destroy_vector(a);
   return code;
 }
 

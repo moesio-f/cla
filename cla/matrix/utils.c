@@ -2,9 +2,9 @@
 #include "../include/matrix_utils.h"
 #include <assert.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 
 Matrix *maybe_alloc_matrix(Matrix *ptr, int rows, int columns,
                            CUDADevice *device) {
@@ -88,4 +88,32 @@ Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
   return matrix;
 }
 
+bool matrix_same_dims_same_devices(int n, ...) {
+  // Early return
+  if (n < 2) {
+    return true;
+  }
 
+  bool status = true;
+  va_list args;
+  va_start(args, n);
+  Matrix *prev = va_arg(args, Matrix *);
+
+  for (int i = 0; i < n - 1; i++) {
+    // Get next Matrix in arguments
+    Matrix *current = va_arg(args, Matrix *);
+
+    // Check condition
+    if (prev->rows != current->rows || prev->columns != current->columns ||
+        prev->device != current->device) {
+      status = false;
+      break;
+    }
+
+    // Update previous
+    prev = current;
+  }
+
+  va_end(args);
+  return status;
+}
