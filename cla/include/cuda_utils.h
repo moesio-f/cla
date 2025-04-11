@@ -10,4 +10,16 @@ Vector *cpu_gpu_conditional_apply_vector_operator(
     Vector *a, Vector *b, Vector *dst, int alloc_dims,
     CUDADevice *alloc_device);
 
+// Templates for matrix operations
+Matrix *cpu_gpu_conditional_apply_matrix_operator(
+    void (*cpu_op)(Matrix *, Matrix *, Matrix *),
+    void (*gpu_op)(Matrix *, Matrix *, Matrix *), bool (*validate)(int, ...),
+    Matrix *a, Matrix *b, Matrix *dst, int alloc_rows, int alloc_columns,
+    CUDADevice *alloc_device);
+
+Matrix *cpu_gpu_conditional_apply_scalar_matrix_operator(
+    void (*cpu_op)(double *, Matrix *, Matrix *),
+    void (*gpu_op)(double *, Matrix *, Matrix *), double a, Matrix *b,
+    Matrix *dst, int alloc_rows, int alloc_columns, CUDADevice *alloc_device);
+
 #endif
