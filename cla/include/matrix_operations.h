@@ -3,21 +3,6 @@
 #include "entities.h"
 #include <stdbool.h>
 
-// Matrix construction
-Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device);
-
-// Matrix from vector
-Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy);
-
-// Clean up matrix from either CUDA or CPU
-void destroy_matrix(Matrix *matrix);
-
-// Copy matrix from `src` to `dst` (if NULL, automatically allocates memory)
-Matrix *copy_matrix(Matrix *a, Matrix *dst);
-
-// Print matrix to stdout
-void print_matrix(Matrix *a, char *suffix);
-
 // Matrix operations, matrix must be on same device.
 // If `dst` is NULL, allocate new matrix with same device as `a`
 Matrix *matrix_add(Matrix *a, Matrix *b, Matrix *dst);
