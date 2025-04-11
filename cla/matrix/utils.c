@@ -20,6 +20,7 @@ Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device) {
   matrix->rows = rows;
   matrix->columns = columns;
   matrix->device = device;
+  matrix->cu_matrix = NULL;
 
   // Initializing array
   double **vectors = (double **)malloc(rows * sizeof(double *));

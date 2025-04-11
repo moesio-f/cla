@@ -20,6 +20,7 @@ Vector *const_vector(int dims, double value, CUDADevice *device) {
   vector->dims = dims;
   vector->device = device;
   vector->arr = (double *)malloc(dims * sizeof(double));
+  vector->cu_vector = NULL;
 
   for (int i = 0; i < dims; i++) {
     double *ptr = vector->arr + i;

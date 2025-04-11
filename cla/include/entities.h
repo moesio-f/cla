@@ -22,23 +22,25 @@ typedef struct {
 } CUDADevice;
 
 // Main vector struct
-typedef struct {
+typedef struct Vector {
   // Data store as array
   double *arr;
   // Store number of dimensions
   int dims;
   // Store current CUDA device if any (NULL=CPU)
   CUDADevice *device;
+  struct Vector *cu_vector;
 } Vector;
 
 // Main matrix struct
-typedef struct {
+typedef struct Matrix {
   // Data store as array
   double **arr;
   // Store number of rows and columns
   int rows, columns;
   // Store CUDA device if any (NULL=CPU)
   CUDADevice *device;
+  struct Matrix *cu_matrix;
 } Matrix;
 
 #endif
