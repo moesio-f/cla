@@ -13,6 +13,16 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#define N_TESTS 10
+#define RED "\x1B[31m"
+#define GRN "\x1B[32m"
+#define YEL "\x1B[33m"
+#define BLU "\x1B[34m"
+#define MAG "\x1B[35m"
+#define CYN "\x1B[36m"
+#define WHT "\x1B[37m"
+#define RESET "\x1B[0m"
+#define PREFIX BLU "[CLA][Test Suite] " RESET
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -151,42 +161,79 @@ RETURN_CODE test_vector_lp_norm() {
 RETURN_CODE test_vector_max_norm() {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
-  Vector *a = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
+  Vector a = {(double[4]){0.0, -1.0, 3.0, 10.0}, 4, NULL};
 
-  if (fabs(vector_max_norm(a) - 10.0) <= 0.001) {
+  if (fabs(vector_max_norm(&a) - 10.0) <= 0.001) {
     code = SUCCESS;
     _TESTS_PASSED++;
   }
 
-  destroy_vector(a);
   return code;
 }
 
 RETURN_CODE test_vector_equals() {
   _TESTS_RUN++;
   RETURN_CODE code = FAILED;
-  Vector *a = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
-  Vector *b = create_vector(4, NULL, 0.0, -1.0, 3.0, 10.0);
+  Vector a = {(double[3]){1.42, -0.142, 3.321}, 3, NULL};
 
-  if (vector_equals(a, b)) {
+  if (vector_equals(&a, &a)) {
     code = SUCCESS;
     _TESTS_PASSED++;
   }
 
-  destroy_vector(a);
   return code;
 }
 
+RETURN_CODE test_matrix_add_cpu() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {4.0, 0.5}, t_2[2] = {-4.0, 9.0};
+
+  return _test_matrix_binop(&matrix_add, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            0.001);
+}
+
+RETURN_CODE test_matrix_sub_cpu() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {2.0, -1.5}, t_2[2] = {-6.0, 7.0};
+
+  return _test_matrix_binop(&matrix_sub, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            0.001);
+}
+
 int main() {
-  test_vector_add_cpu();
-  test_vector_sub_cpu();
-  test_vector_element_wise_prod_cpu();
-  test_vector_dot_product_cpu();
-  test_vector_l2_norm();
-  test_vector_lp_norm();
-  test_vector_max_norm();
-  test_vector_equals();
-  printf("Total tests: %d | Tests passed: %d | Tests failed: %d\n", _TESTS_RUN,
-         _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
+  RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
+                                           &test_vector_sub_cpu,
+                                           &test_vector_element_wise_prod_cpu,
+                                           &test_vector_dot_product_cpu,
+                                           &test_vector_l2_norm,
+                                           &test_vector_lp_norm,
+                                           &test_vector_max_norm,
+                                           &test_vector_equals,
+                                           &test_matrix_add_cpu,
+                                           &test_matrix_sub_cpu};
+  char names[N_TESTS][50] = {"test_vector_add_cpu",
+                             "test_vector_sub_cpu",
+                             "test_vector_element_wise_prod_cpu",
+                             "test_vector_dot_product_cpu",
+                             "test_vector_l2_norm",
+                             "test_vector_lp_norm",
+                             "test_vector_max_norm",
+                             "test_vector_equals",
+                             "test_matrix_add_cpu",
+                             "test_matrix_sub_cpu"};
+
+  printf(PREFIX "Tests started...\n");
+  for (int i = 0; i < N_TESTS; i++) {
+    printf(PREFIX "Ran test \"%s\": %s\n", names[i],
+           test_fn[i]() == SUCCESS ? GRN "SUCCESS" RESET : RED "FAILED" RESET);
+  }
+
+  printf(PREFIX "Total tests: %d | Tests passed: %d | Tests failed: "
+                "%d\n",
+         _TESTS_RUN, _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;
 }
