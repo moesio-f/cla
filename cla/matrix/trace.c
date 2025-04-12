@@ -5,7 +5,7 @@
 
 double matrix_trace(Matrix *a) {
   // Precondition
-  assert(matrix_square(a));
+  assert(matrix_is_square(a));
 
   double trace = 0.0;
 

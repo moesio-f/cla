@@ -1,44 +1,67 @@
-#ifndef CLA_ENTITIES
-#define CLA_ENTITIES
-#include <stdbool.h>
-/* Entities.
+/**
+ * @file: entities.h
  *
  * This header defines all entities
  *  used by the library. Operations and
  *  functionalities for such entities
- *  are defined in other header files.
+ *  are defined in other headers.
  * */
+#ifndef CLA_ENTITIES
+#define CLA_ENTITIES
+#include <stdbool.h>
 
-// Enumeration for copy strategy between devices
-typedef enum { KEEP_SRC, FREE_SRC } CopyStrategy;
+/**
+ * Strategies for copying data between
+ *  CPU and GPU (CUDA).
+ * */
+typedef enum {
+  CopyStrategy_KEEP_SRC, /** Keep the data in source device. */
+  CopyStrategy_FREE_SRC  /** Free the data in source device. */
+} CopyStrategy;
 
-// Enumeration for constructing matrix from vector
-typedef enum { SINGLE_ROW, SINGLE_COLUMN } Vector2MatrixStrategy;
+/**
+ * Strategy to construct a matrix from a vector.
+ * */
+typedef enum {
+  Vector2MatrixStrategy_ROW,   /** Create a row-vector. */
+  Vector2MatrixStrategy_COLUMN /** Create a column-vector. */
+} Vector2MatrixStrategy;
 
-// CUDA Device struct
+/**
+ * Represents a CUDA-capable device.
+ * */
 typedef struct {
-  int id;
-  char name[256];
+  int id;         /** Unique integer identifier for this device. */
+  char name[256]; /** Device name.  */
 } CUDADevice;
 
-// Main vector struct
+/**
+ * Represents the collection of CUDA-capable
+ *  devices available for usage.
+ * */
 typedef struct {
-  // Data store as array
-  double *arr;
-  // Store number of dimensions
-  int dims;
-  // Store current CUDA device if any (NULL=CPU)
-  CUDADevice *device;
+  CUDADevice *devices; /** Array of available devices. */
+  int deviceCount;     /** Number of CUDA devices available. */
+} AvailableCUDADevices;
+
+/**
+ * Represents a vector (1d array).
+ * */
+typedef struct Vector {
+  double *arr;        /** Data store. */
+  int dims;           /** Number of dimensions (i.e., elements). */
+  CUDADevice *device; /** Device where the data is located (NULL means CPU). */
+  struct Vector *cu_vector; /** Vector in GPU memory (NULL if CPU). */
 } Vector;
 
-// Main matrix struct
-typedef struct {
-  // Data store as array
-  double **arr;
-  // Store number of rows and columns
-  int rows, columns;
-  // Store CUDA device if any (NULL=CPU)
-  CUDADevice *device;
+/**
+ * Represents a matrix (2d array).
+ * */
+typedef struct Matrix {
+  double **arr;       /** Data store. */
+  int rows;           /** Number of rows. */
+  int columns;        /** Number of columns. */
+  CUDADevice *device; /** Device where the data is located (NULL means CPU). */
+  struct Matrix *cu_matrix; /** Matrix in GPU memory (NULL if CPU). */
 } Matrix;
-
 #endif

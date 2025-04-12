@@ -163,5 +163,8 @@ dmypy.json
 # LSP
 .ccls-cache/
 
-# Build directorioes
+# Build directories
 build-cla*/
+
+# Other files
+*.zip

@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 bool matrix_equals(Matrix *a, Matrix *b) {
-  assert(matrix_same_dims_same_devices(2, a, b));
+  assert(matrix_has_same_dims_same_devices(a, b, a));
 
   // Guarantee a and b are on CPU
   // ...

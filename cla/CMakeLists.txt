@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 3.20)
 
 # Setting project name, version and language
 project(cla
-        VERSION 0.0
+        VERSION 0.1
         LANGUAGES CUDA C)
 
 # Add library cla
 add_library(${CMAKE_PROJECT_NAME} SHARED)
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 17)
 
-# Add all subdirecoties that compose this library
+# Add all subdirectories that compose this library
 add_subdirectory(cuda)
 add_subdirectory(matrix)
 add_subdirectory(vector)

@@ -28,6 +28,6 @@ __global__ void _cu_matrix_mult(Matrix *a, Matrix *b, Matrix *dst) {
 
 extern "C" Matrix *matrix_mult(Matrix *a, Matrix *b, Matrix *dst) {
   return cpu_gpu_conditional_apply_matrix_operator(
-      &_matrix_mult, NULL, &matrix_mult_compat, a, b, dst, a->rows,
+      &_matrix_mult, NULL, &matrix_is_mult_compat, a, b, dst, a->rows,
       b->columns, a->device);
 }

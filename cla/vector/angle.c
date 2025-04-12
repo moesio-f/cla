@@ -6,7 +6,7 @@
 #include <math.h>
 
 double vector_angle_between_rad(Vector *a, Vector *b) {
-  assert(vec_same_dims_same_devices(2, a, b));
+  assert(vector_has_same_dims_same_devices(a, b, a));
 
   // Guarantee a and b are on CPU
   // ...

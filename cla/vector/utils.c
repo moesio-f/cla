@@ -20,6 +20,7 @@ Vector *const_vector(int dims, double value, CUDADevice *device) {
   vector->dims = dims;
   vector->device = device;
   vector->arr = (double *)malloc(dims * sizeof(double));
+  vector->cu_vector = NULL;
 
   for (int i = 0; i < dims; i++) {
     double *ptr = vector->arr + i;
@@ -78,31 +79,7 @@ void print_vector(Vector *a, char *suffix) {
   }
 }
 
-bool vec_same_dims_same_devices(int n, ...) {
-  // Early return
-  if (n < 2) {
-    return true;
-  }
-
-  bool status = true;
-  va_list args;
-  va_start(args, n);
-  Vector *prev = va_arg(args, Vector *);
-
-  for (int i = 0; i < n - 1; i++) {
-    // Get next Vector in arguments
-    Vector *current = va_arg(args, Vector *);
-
-    // Check condition
-    if (prev->dims != current->dims || prev->device != current->device) {
-      status = false;
-      break;
-    }
-
-    // Update previous
-    prev = current;
-  }
-
-  va_end(args);
-  return status;
+bool vector_has_same_dims_same_devices(Vector *a, Vector *b, Vector *dst) {
+  return a->device == b->device && b->device == dst->device &&
+         a->dims == b->dims && b->dims == dst->dims;
 }

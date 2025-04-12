@@ -21,6 +21,6 @@ __global__ void _cu_vector_add(Vector *a, Vector *b, Vector *dst) {
 
 extern "C" Vector *vector_add(Vector *a, Vector *b, Vector *dst) {
   return cpu_gpu_conditional_apply_vector_operator(
-      &_vector_add, NULL, &vec_same_dims_same_devices, a, b, dst, a->dims,
+      &_vector_add, NULL, &vector_has_same_dims_same_devices, a, b, dst, a->dims,
       a->device);
 }
