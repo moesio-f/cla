@@ -10,7 +10,7 @@ project(cla
 add_library(${CMAKE_PROJECT_NAME} SHARED)
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 17)
 
-# Add all subdirecoties that compose this library
+# Add all subdirectories that compose this library
 add_subdirectory(cuda)
 add_subdirectory(matrix)
 add_subdirectory(vector)
