@@ -44,6 +44,7 @@ pack-release-cla:
 	@echo "[Makefile] Parsing release version for CLA..."
 	@awk '/project\(cla/,/CUDA C\)/' $(CLA_SRC_PATH)/CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' > make_cla_version
 	@echo "[Makefile] Packing Linux cla build..."
+	@rm -f cla-linux-`cat make_cla_version`.zip
 	@cp $(CLA_BUILD_PATH)/libcla.so .
 	@zip cla-linux-`cat make_cla_version`.zip $(CLA_SRC_PATH)/include/*.h libcla.so
 	@rm libcla.so
