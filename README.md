@@ -21,7 +21,7 @@ CLA is a simple toy library for basic vector/matrix operations in C. This projec
 # Features
 
 - C17 support, Python 3.13, CUDA 12.8;
-- Windows and Linux support;
+- Linux support;
 - Vector-vector operations;
 - Matrix-matrix operations;
 - Vector and matrix norms;
@@ -127,7 +127,7 @@ int main() {
 }
 ```
 
-Compile with: (i) `gcc -l cla <filename>.c`, if you installed the library system-wide (i.e., copied the headers to `/usr/include/` and shared library to `/usr/lib/`); or (ii) `gcc -I <path-to-library-root> -L <path-to-library-root> -l cla <filename>.c`, where `<path-to-library-root>` is the path to the release files. To run, make the `.so`/`.dll` findable by the executable (the configuration is OS-specific).
+Compile with: (i) `gcc -l cla <filename>.c`, if you installed the library system-wide (i.e., copied the headers to `/usr/include/` and shared library to `/usr/lib/`); or (ii) `gcc -I <path-to-library-root> -L <path-to-library-root> -l cla <filename>.c`, where `<path-to-library-root>` is the path to the release files. To run, make the `.so` findable by the executable (i.e., either update `LD_LIBRARY_PATH` environment variable or include it on `/usr/lib`/`/lib`).
 
 ## Python API
 
