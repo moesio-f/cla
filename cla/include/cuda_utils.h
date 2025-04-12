@@ -20,6 +20,8 @@
  *  on the same device prior to calling this
  *  function, otherwise it will throw an assertion
  *  error.
+ * The GPU operation is a kernel function that
+ *  supports 1d-layouts for both blocks and threads.
  * */
 Vector *cpu_gpu_conditional_apply_vector_operator(
     void (*cpu_op)(Vector *, Vector *, Vector *),
@@ -35,6 +37,8 @@ Vector *cpu_gpu_conditional_apply_vector_operator(
  *  `alloc_device`.
  * The scalar `a` is automatically moved to GPU
  *  memory if the operation is to be run on GPU.
+ * The GPU operation is a kernel function that
+ *  supports 1d-layouts for both blocks and threads.
  * */
 Vector *cpu_gpu_conditional_apply_scalar_vector_operator(
     void (*cpu_op)(double *, Vector *, Vector *),
@@ -52,6 +56,8 @@ Vector *cpu_gpu_conditional_apply_scalar_vector_operator(
  *  on the same device prior to calling this
  *  function, otherwise it will throw an assertion
  *  error.
+ * The GPU operation is a kernel function that
+ *  supports 2d-layouts for both blocks and threads.
  * */
 Matrix *cpu_gpu_conditional_apply_matrix_operator(
     void (*cpu_op)(Matrix *, Matrix *, Matrix *),
@@ -67,6 +73,8 @@ Matrix *cpu_gpu_conditional_apply_matrix_operator(
  *  in the `alloc_device`.
  * The scalar `a` is automatically moved to GPU
  *  memory if the operation is to be run on GPU.
+ * The GPU operation is a kernel function that
+ *  supports 2d-layouts for both blocks and threads.
  * */
 Matrix *cpu_gpu_conditional_apply_scalar_matrix_operator(
     void (*cpu_op)(double *, Matrix *, Matrix *),
