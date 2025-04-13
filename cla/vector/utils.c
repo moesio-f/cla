@@ -69,8 +69,11 @@ void destroy_vector(Vector *vector) {
 }
 
 Vector *copy_vector(Vector *a, Vector *dst) {
+  // Precondition
+  assert(vector_has_same_dims_same_devices(a, dst, a));
+
   CUDADevice *device = a->device;
-  dst = maybe_alloc_vector(dst, a->dims, a->device);
+  dst = maybe_alloc_vector(dst, a->dims, device);
 
   if (device != NULL) {
     vector_to_cpu(a);

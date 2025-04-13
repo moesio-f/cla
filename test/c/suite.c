@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 18
+#define N_TESTS 19
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -321,6 +321,14 @@ RETURN_CODE test_vector_move_cuda_cpu() {
     return FAILED;
   }
 
+  // Check if values are correct
+  for (int i = 0; i < a->dims; i++) {
+    if (fabs(a->arr[i] - 1.0) > 0.00001) {
+      destroy_vector(a);
+      return FAILED;
+    }
+  }
+
   destroy_vector(a);
   _TESTS_PASSED++;
   return SUCCESS;
@@ -348,7 +356,61 @@ RETURN_CODE test_cuda_vector_add() {
   return SUCCESS;
 }
 
+RETURN_CODE test_matrix_move_cuda_cpu() {
+  _TESTS_RUN++;
+  if (!has_cuda()) {
+    _TESTS_PASSED++;
+    return SUCCESS;
+  }
+
+  double target = 232.5;
+
+  // Get first device
+  CUDADevice *device = get_device_by_id(0);
+
+  // Create matrix on CPU
+  Matrix *a = const_matrix(1000, 1000, target, NULL);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_matrix != NULL) {
+    return FAILED;
+  }
+
+  // Move it to GPU
+  matrix_to_cu(a, device);
+
+  // If not on GPU
+  if (a->arr != NULL || a->cu_matrix == NULL || a->device != device) {
+    return FAILED;
+  }
+
+  // Move it back to CPU
+  matrix_to_cpu(a);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_matrix != NULL) {
+    return FAILED;
+  }
+
+  // Check if values are correct
+  for (int i = 0; i < a->rows; i++) {
+    for (int j = 0; j < a->columns; j++) {
+      if (fabs(a->arr[i][j] - target) > 0.00001) {
+        destroy_matrix(a);
+        return FAILED;
+      }
+    }
+  }
+
+  destroy_matrix(a);
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
 int main() {
+  // Initialize devices
+  populate_devices();
+
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
                                            &test_vector_element_wise_prod_cpu,
@@ -366,7 +428,8 @@ int main() {
                                            &test_matrix_frobenius_norm,
                                            &test_cuda_devices,
                                            &test_vector_move_cuda_cpu,
-                                           &test_cuda_vector_add};
+                                           &test_cuda_vector_add,
+                                           &test_matrix_move_cuda_cpu};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -384,7 +447,8 @@ int main() {
                              "test_frobenius_norm",
                              "test_cuda_devices",
                              "test_vector_move_cuda_cpu",
-                             "test_cuda_vector_add"};
+                             "test_cuda_vector_add",
+                             "test_matrix_move_cuda_cpu"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
@@ -395,5 +459,9 @@ int main() {
   printf(PREFIX "Total tests: %d | Tests passed: %d | Tests failed: "
                 "%d\n",
          _TESTS_RUN, _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
+
+  // Clear devices
+  clear_devices();
+
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;
 }

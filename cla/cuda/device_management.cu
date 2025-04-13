@@ -151,3 +151,119 @@ extern "C" Vector *vector_to_cpu(Vector *src) {
 
   return src;
 }
+
+extern "C" Matrix *matrix_to_cu(Matrix *src, CUDADevice *device) {
+  if (src->device != NULL) {
+    // Maybe it's already on correct device?
+    if (src->device == device) {
+      return src;
+    }
+
+    // It's on another device!
+    // Move data back to CPU before proceeding
+    // Better handling requires CUDA Driver API
+    matrix_to_cpu(src);
+  }
+
+  // src is on CPU, activate target device
+  cudaSetDevice(device->id);
+
+  // 1. Allocate memory in GPU for the matrix
+  size_t mat_size = sizeof(Matrix);
+  Matrix *cu_matrix = NULL;
+  cudaMalloc(&cu_matrix, mat_size);
+
+  // 2. Construct underlying array (i.e., a collection
+  //    of n_rows pointers).
+  size_t arr_size = src->rows * sizeof(double *);
+  double **cu_arr = NULL;
+  cudaMalloc(&cu_arr, arr_size);
+
+  // 3. Construct row arrays and copy them to
+  //    cu_array.
+  // tmp is needed to set each index of the
+  //    the cu_array on CPU prior to copying
+  //    it to GPU.
+  size_t row_size = src->columns * sizeof(double);
+  double **tmp = (double **)malloc(arr_size);
+  for (int i = 0; i < src->rows; i++) {
+    // Allocate memory on GPU for row
+    double *cu_row = NULL;
+    cudaMalloc(&cu_row, row_size);
+
+    // Copy the actual contents from src to
+    //  the GPU row
+    cudaMemcpy(cu_row, src->arr[i], row_size, cudaMemcpyHostToDevice);
+
+    // Update the tmp with the address of this new
+    //  row
+    tmp[i] = cu_row;
+
+    // Free the CPU memory
+    free(src->arr[i]);
+  }
+
+  // Copy the tmp (array of GPU arrays addresses) to the
+  //    GPU array
+  cudaMemcpy(cu_arr, tmp, arr_size, cudaMemcpyHostToDevice);
+
+  // Free CPU memory
+  free(tmp);
+
+  // 4. Now, we have the cu_array complete,
+  //    all we need is to send a Matrix struct
+  //    to GPU.
+  free(src->arr);
+  src->arr = cu_arr;
+  src->cu_matrix = NULL;
+  src->device = NULL;
+  cudaMemcpy(cu_matrix, src, mat_size, cudaMemcpyHostToDevice);
+
+  // Update CPU vector metadata
+  src->device = device;
+  src->arr = NULL;
+  src->cu_matrix = cu_matrix;
+
+  // Return CPU vector metadata
+  return src;
+}
+
+extern "C" Matrix *matrix_to_cpu(Matrix *src) {
+  // Maybe device is already on CPU
+  if (src->device == NULL) {
+    return src;
+  }
+
+  // Preconditions
+  assert(src->arr == NULL);
+
+  // Guarantee CUDA uses the correct device
+  cudaSetDevice(src->device->id);
+
+  // 1. Bring back the Matrix from GPU
+  size_t mat_size = sizeof(Matrix);
+  Matrix *cu_matrix = src->cu_matrix;
+  cudaMemcpy(src, cu_matrix, mat_size, cudaMemcpyDeviceToHost);
+  cudaFree(cu_matrix);
+
+  // 2. Reconstruct array in CPU
+  size_t arr_size = src->rows * sizeof(double *);
+  size_t row_size = src->columns * sizeof(double);
+  double **cu_arr = src->arr;
+  src->arr = (double **)malloc(arr_size);
+  cudaMemcpy(src->arr, cu_arr, arr_size, cudaMemcpyDeviceToHost);
+  for (int i = 0; i < src->rows; i++) {
+    double *row = (double *)malloc(row_size);
+    double *cu_row = src->arr[i];
+    cudaMemcpy(row, cu_row, row_size, cudaMemcpyDeviceToHost);
+    src->arr[i] = row;
+    cudaFree(cu_row);
+  }
+  cudaFree(cu_arr);
+
+  // Update CPU vector metadata
+  src->cu_matrix = NULL;
+  src->device = NULL;
+
+  return src;
+}

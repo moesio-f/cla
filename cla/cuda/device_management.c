@@ -48,10 +48,20 @@ char *device_to_str(CUDADevice *device, char *dst) {
 
 int cuda_get_device_count() {
   populate_devices();
-  return DEVICES->count;
+  int count = DEVICES->count;
+  if (count <= 0) {
+    clear_devices();
+  }
+
+  return count;
 }
 
 bool has_cuda() {
   populate_devices();
-  return DEVICES->count > 0;
+  bool has_cuda = DEVICES->count > 0;
+  if (!has_cuda) {
+    clear_devices();
+  }
+
+  return has_cuda;
 }

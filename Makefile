@@ -5,6 +5,7 @@ TOOLCHAIN_WIN := toolchain/win-mingw.cmake
 CLA_BUILD_WIN_PATH := build-cla-win
 CLA_TEST_TARGET := $(CLA_BUILD_PATH)/test_suite
 CLA_TEST_MEM_LEAK_TARGET := $(CLA_BUILD_PATH)/memory_leak
+CLA_TEST_MEM_STABLE_TARGET := $(CLA_BUILD_PATH)/memory_stability
 CLA_VALGRIND_SUPP := valgrind_cudart.supp
 
 # Variable Python API
@@ -40,17 +41,15 @@ compile-cla:
 # Run cla tests
 test-cla:
 	@echo "[Makefile] Running test target..."
-	@chmod +x $(CLA_TEST_TARGET)
 	@./$(CLA_TEST_TARGET)
 
 test-cla-memory-leak:
 	@echo "[Makefile] Running memory leak tests with Valgrind/compute_sanitizer..."
-	@chmod +x $(CLA_TEST_MEM_LEAK_TARGET)
-	@echo -e "\n[Makefile] Running Vector on CPU..."
-	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector CPU
-	@echo -e "\n[Maefile] Running Vector on GPU..."
-	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector GPU
-	@$(CUDA_COMPUTE_SANITIZER) $(CLA_TEST_MEM_LEAK_TARGET) vector GPU
+	@for e in vector matrix; do for d in CPU GPU; do valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) $$e $$d; $(CUDA_COMPUTE_SANITIZER) $(CLA_TEST_MEM_LEAK_TARGET) $$e $$d; done; done
+
+test-cla-memory-stability:
+	@echo "[Makefile] Starting interactive memory stability test"
+	@./$(CLA_TEST_MEM_STABLE_TARGET)
 
 # Pack into release
 pack-release-cla:

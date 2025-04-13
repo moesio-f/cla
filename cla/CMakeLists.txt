@@ -35,7 +35,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME} ${math} cudart)
 # Add test targets
 add_executable(test_suite ../test/c/suite.c)
 add_executable(memory_leak ../test/c/memory_leak.c)
+add_executable(memory_stability ../test/c/memory_stability.c)
 
 # Link library to executable
 target_link_libraries(test_suite PRIVATE ${CMAKE_PROJECT_NAME})
 target_link_libraries(memory_leak PRIVATE ${CMAKE_PROJECT_NAME})
+target_link_libraries(memory_stability PRIVATE ${CMAKE_PROJECT_NAME})

@@ -93,12 +93,11 @@ Matrix *matrix_to_cu(Matrix *src, CUDADevice *device);
 
 /**
  * Moves the `src` vector from the CUDA device
- *  back to the CPU employing the selected
- *  strategy.
+ *  back to the CPU.
  * If the vector isn't in GPU, silent return
  *  `src` without any additional checks.
  * This function unset the `cu_matrix` property
  *  of the Matrix struct.
  * */
-Matrix *matrix_to_cpu(Matrix *src, CUDADevice *device);
+Matrix *matrix_to_cpu(Matrix *src);
 #endif
