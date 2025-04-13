@@ -10,6 +10,9 @@ CLA_VALGRIND_SUPP := valgrind_cudart.supp
 # Variable Python API
 PYCLA_DIST := dist
 
+# Utility variables
+CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
+
 # Run all steps to build cla and pycla (TODO)
 all: prepare-cla compile-cla
 
@@ -41,12 +44,13 @@ test-cla:
 	@./$(CLA_TEST_TARGET)
 
 test-cla-memory-leak:
-	@echo "[Makefile] Running memory leak tests with Valgrind..."
+	@echo "[Makefile] Running memory leak tests with Valgrind/compute_sanitizer..."
 	@chmod +x $(CLA_TEST_MEM_LEAK_TARGET)
 	@echo -e "\n[Makefile] Running Vector on CPU..."
 	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector CPU
 	@echo -e "\n[Maefile] Running Vector on GPU..."
 	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector GPU
+	@$(CUDA_COMPUTE_SANITIZER) $(CLA_TEST_MEM_LEAK_TARGET) vector GPU
 
 # Pack into release
 pack-release-cla:
