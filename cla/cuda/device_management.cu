@@ -2,6 +2,7 @@ extern "C" {
 #include "../include/device_management.h"
 #include "../include/entities.h"
 #include "../include/vector_utils.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 }
@@ -19,6 +20,7 @@ extern "C" void populate_devices() {
   DEVICES->count = 0;
 
   // Try to get CUDA devices count
+  cudaDeviceProp prop;
   cudaGetDeviceCount(&DEVICES->count);
 
   // If it has devices, get their metadata
@@ -26,7 +28,6 @@ extern "C" void populate_devices() {
     DEVICES->devices =
         (CUDADevice *)malloc(sizeof(CUDADevice) * DEVICES->count);
     for (int i = 0; i < DEVICES->count; i++) {
-      cudaDeviceProp prop;
       cudaGetDeviceProperties(&prop, i);
       char *name = (char *)malloc(sizeof(char) * 256);
       strcpy(name, prop.name);
@@ -41,6 +42,26 @@ extern "C" void populate_devices() {
                                          prop.maxThreadsPerBlock};
     }
   }
+}
+
+extern "C" void clear_devices() {
+  // If no devices, return
+  if (DEVICES == NULL) {
+    return;
+  }
+
+  // If it has devices, deallocate memory
+  //    for each one
+  if (DEVICES->count > 0) {
+    for (int i = 0; i < DEVICES->count; i++) {
+      free(DEVICES->devices[i].name);
+    }
+    free(DEVICES->devices);
+  }
+
+  // Deallocate memory for global variable
+  free(DEVICES);
+  DEVICES = NULL;
 }
 
 extern "C" Vector *vector_to_cu(Vector *src, CUDADevice *device) {
@@ -72,17 +93,14 @@ extern "C" Vector *vector_to_cu(Vector *src, CUDADevice *device) {
   // Copy array from CPU to GPU
   cudaMemcpy(cu_arr, src->arr, arr_size, cudaMemcpyHostToDevice);
 
-  // Copy target vector to GPU by constructing a dummy one
-  //    in CPU
-  Vector *dummy = const_vector(src->dims, 0.0, NULL);
-  double *dummy_arr = dummy->arr;
-  dummy->arr = cu_arr;
-  cudaMemcpy(cu_vector, dummy, vec_size, cudaMemcpyHostToDevice);
-  dummy->arr = dummy_arr;
-  destroy_vector(dummy);
-
   // Clear CPU array
   free(src->arr);
+
+  // Copy vector from CPU to GPU in-place
+  src->arr = cu_arr;
+  src->cu_vector = NULL;
+  src->device = NULL;
+  cudaMemcpy(cu_vector, src, vec_size, cudaMemcpyHostToDevice);
 
   // Update CPU vector metadata
   src->device = device;
@@ -102,19 +120,29 @@ extern "C" Vector *vector_to_cpu(Vector *src) {
   // Guarantee CUDA uses the correct device
   cudaSetDevice(src->device->id);
 
+  // Preconditions
+  assert(src->arr == NULL);
+
   // Allocate memory for underlying array in CPU
   size_t arr_size = src->dims * sizeof(double);
   double *vec_arr = (double *)malloc(arr_size);
 
-  // Copy Vector from GPU to CPU, then copy array to CPU
-  Vector *dummy = const_vector(src->dims, 0.0, NULL);
-  cudaMemcpy(dummy, src->cu_vector, sizeof(Vector), cudaMemcpyDeviceToHost);
-  cudaMemcpy(vec_arr, dummy->arr, arr_size, cudaMemcpyDeviceToHost);
+  // Copy Vector from GPU to CPU in-place
+  // We need to store the pointer to cu_vector
+  //    since it will be override by the contents
+  //    of cu_vector.
+  Vector *cu_vector = src->cu_vector;
+  cudaMemcpy(src, cu_vector, sizeof(Vector), cudaMemcpyDeviceToHost);
 
-  // Clear GPU array and Vector
-  cudaFree(dummy->arr);
-  cudaFree(src->cu_vector);
-  free(dummy);
+  // Copy the data from the cu_vector->arr to a CPU array
+  double *cu_arr = src->arr;
+  cudaMemcpy(vec_arr, src->arr, arr_size, cudaMemcpyDeviceToHost);
+
+  // Clear GPU array
+  cudaFree(cu_arr);
+
+  // Clear GPU vector
+  cudaFree(cu_vector);
 
   // Update CPU vector metadata
   src->arr = vec_arr;

@@ -32,8 +32,10 @@ find_library(math m)
 # Link external libraries to cla
 target_link_libraries(${CMAKE_PROJECT_NAME} ${math} cudart)
 
-# Add test_suite target
+# Add test targets
 add_executable(test_suite ../test/c/suite.c)
+add_executable(memory_leak ../test/c/memory_leak.c)
 
 # Link library to executable
 target_link_libraries(test_suite PRIVATE ${CMAKE_PROJECT_NAME})
+target_link_libraries(memory_leak PRIVATE ${CMAKE_PROJECT_NAME})

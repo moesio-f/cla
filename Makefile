@@ -4,6 +4,8 @@ CLA_SRC_PATH := cla
 TOOLCHAIN_WIN := toolchain/win-mingw.cmake
 CLA_BUILD_WIN_PATH := build-cla-win
 CLA_TEST_TARGET := $(CLA_BUILD_PATH)/test_suite
+CLA_TEST_MEM_LEAK_TARGET := $(CLA_BUILD_PATH)/memory_leak
+CLA_VALGRIND_SUPP := valgrind_cudart.supp
 
 # Variable Python API
 PYCLA_DIST := dist
@@ -12,7 +14,7 @@ PYCLA_DIST := dist
 all: prepare-cla compile-cla
 
 # Create new target and run tests
-test: all test-cla
+test: all test-cla test-cla-memory-leak
 
 # Create release
 release: test pack-release-cla
@@ -37,6 +39,14 @@ test-cla:
 	@echo "[Makefile] Running test target..."
 	@chmod +x $(CLA_TEST_TARGET)
 	@./$(CLA_TEST_TARGET)
+
+test-cla-memory-leak:
+	@echo "[Makefile] Running memory leak tests with Valgrind..."
+	@chmod +x $(CLA_TEST_MEM_LEAK_TARGET)
+	@echo -e "\n[Makefile] Running Vector on CPU..."
+	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector CPU
+	@echo -e "\n[Maefile] Running Vector on GPU..."
+	@valgrind --leak-check=yes --suppressions=$(CLA_VALGRIND_SUPP) $(CLA_TEST_MEM_LEAK_TARGET) vector GPU
 
 # Pack into release
 pack-release-cla:

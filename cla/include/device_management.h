@@ -20,6 +20,14 @@ extern AvailableCUDADevices
  * */
 void populate_devices();
 
+/**
+ * Clears the `DEVICES` global variable.
+ * If it is already clear, silently ignores.
+ * This function should be used to clear allocated
+ *  memory (i.e., cleanup, etc).
+ * */
+void clear_devices();
+
 /** 
  * Returns whether the system has any CUDA
  *  capable device.
