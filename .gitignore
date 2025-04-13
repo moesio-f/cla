@@ -168,3 +168,6 @@ build-cla*/
 
 # Other files
 *.zip
+
+# Workaround to get .ccls to recofnize CUDA headers
+cuda_runtime_api.h

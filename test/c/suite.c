@@ -4,6 +4,7 @@
  *  C API.
  *
  * */
+#include "../../cla/include/device_management.h"
 #include "../../cla/include/entities.h"
 #include "../../cla/include/matrix_operations.h"
 #include "../../cla/include/matrix_utils.h"
@@ -13,7 +14,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 15
+#define N_TESTS 18
 #define RED "\x1B[31m"
 #define GRN "\x1B[32m"
 #define YEL "\x1B[33m"
@@ -278,6 +279,83 @@ RETURN_CODE test_matrix_frobenius_norm() {
   return code;
 }
 
+RETURN_CODE test_cuda_devices() {
+  _TESTS_RUN++;
+  if (has_cuda()) {
+    char info[512];
+    printf(MAG "Found the following devices:\n" RESET);
+    for (int i = 0; i < cuda_get_device_count(); i++) {
+      printf(MAG "%s\n" RESET, device_to_str(get_device_by_id(i), info));
+    }
+  } else {
+    printf(RED "No device found." RESET);
+  }
+
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
+RETURN_CODE test_vector_move_cuda_cpu() {
+  _TESTS_RUN++;
+  if (!has_cuda()) {
+    _TESTS_PASSED++;
+    return SUCCESS;
+  }
+
+  // Get first device
+  CUDADevice *device = get_device_by_id(0);
+
+  // Create vector on CPU
+  Vector *a = const_vector(10, 1.0, NULL);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_vector != NULL) {
+    return FAILED;
+  }
+
+  // Move it to GPU
+  vector_to_cu(a, device);
+
+  // If not on GPU
+  if (a->arr != NULL || a->cu_vector == NULL || a->device != device) {
+    return FAILED;
+  }
+
+  // Move it back to CPU
+  vector_to_cpu(a);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_vector != NULL) {
+    return FAILED;
+  }
+
+  destroy_vector(a);
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
+RETURN_CODE test_cuda_vector_add() {
+  _TESTS_RUN++;
+  if (has_cuda()) {
+    CUDADevice *device = get_device_by_id(0);
+    Vector *a = const_vector(100000, 1.0, device);
+    Vector *b = const_vector(100000, 2.0, device);
+    Vector *target = const_vector(100000, 3.0, device);
+    Vector *result = vector_add(a, b, NULL);
+    bool equals = vector_equals(result, target);
+    destroy_vector(a);
+    destroy_vector(b);
+    destroy_vector(target);
+    destroy_vector(result);
+    if (!equals) {
+      return FAILED;
+    }
+  }
+
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
 int main() {
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
@@ -293,7 +371,10 @@ int main() {
                                            &test_matrix_mult_scalar_cpu,
                                            &test_matrix_trace,
                                            &test_matrix_lpq_norm,
-                                           &test_matrix_frobenius_norm};
+                                           &test_matrix_frobenius_norm,
+                                           &test_cuda_devices,
+                                           &test_vector_move_cuda_cpu,
+                                           &test_cuda_vector_add};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -308,11 +389,14 @@ int main() {
                              "test_matrix_mult_scalar_cpu",
                              "test_matrix_trace",
                              "test_matrix_lpq_norm",
-                             "test_frobenius_norm"};
+                             "test_frobenius_norm",
+                             "test_cuda_devices",
+                             "test_vector_move_cuda_cpu",
+                             "test_cuda_vector_add"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
-    printf(PREFIX "Ran test \"%s\": %s\n", names[i],
+    printf(PREFIX "Ran test #%d \"%s\": %s\n", i + 1, names[i],
            test_fn[i]() == SUCCESS ? GRN "SUCCESS" RESET : RED "FAILED" RESET);
   }
 

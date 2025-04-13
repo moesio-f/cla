@@ -4,7 +4,10 @@ extern "C" {
 #include "../include/matrix_utils.h"
 #include "../include/vector_utils.h"
 #include <assert.h>
+#include <math.h>
 }
+
+#define MIN
 
 extern "C" Vector *cpu_gpu_conditional_apply_vector_operator(
     void (*cpu_op)(Vector *, Vector *, Vector *),
@@ -22,9 +25,17 @@ extern "C" Vector *cpu_gpu_conditional_apply_vector_operator(
     // If it's CPU, just call it directly
     cpu_op(a, b, dst);
   } else {
-    // If it's GPU, add memory management
-    // and use <<<...,...>>> syntax;
-    gpu_op<<<1, 1>>>(a, b, dst);
+    CUDADevice *device = a->device;
+
+    // Simple algorithm to find an appropriate
+    //  number of blocks/threads based on device.
+    int max_threads = device->max_threads_per_block;
+    int dims = dst->dims;
+    int n_threads = max_threads > dims ? dims : max_threads;
+    int n_blocks = 1 + (int)ceil((dims - n_threads) / n_threads);
+
+    // Launch the kernel with the cu_vectors
+    gpu_op<<<n_blocks, n_threads>>>(a->cu_vector, b->cu_vector, dst->cu_vector);
   }
 
   // Return dst

@@ -8,8 +8,6 @@
 double vector_angle_between_rad(Vector *a, Vector *b) {
   assert(vector_has_same_dims_same_devices(a, b, a));
 
-  // Guarantee a and b are on CPU
-  // ...
   double dot_product = vector_dot_product(a, b);
   double l2_a = vector_l2_norm(a);
   double l2_b = vector_l2_norm(b);

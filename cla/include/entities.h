@@ -11,15 +11,6 @@
 #include <stdbool.h>
 
 /**
- * Strategies for copying data between
- *  CPU and GPU (CUDA).
- * */
-typedef enum {
-  CopyStrategy_KEEP_SRC, /** Keep the data in source device. */
-  CopyStrategy_FREE_SRC  /** Free the data in source device. */
-} CopyStrategy;
-
-/**
  * Strategy to construct a matrix from a vector.
  * */
 typedef enum {
@@ -31,8 +22,15 @@ typedef enum {
  * Represents a CUDA-capable device.
  * */
 typedef struct {
-  int id;         /** Unique integer identifier for this device. */
-  char name[256]; /** Device name.  */
+  int id;                    /** Unique integer identifier for this device. */
+  char *name;                /** Device name.  */
+  int max_grid_size_x;       /** Maximum size of x dimension of a grid. */
+  int max_grid_size_y;       /** Maximum size of y dimension of a grid. */
+  int max_grid_size_z;       /** Maximum size of z dimension of a grid. */
+  int max_block_size_x;     /** Maximum size of x dimension of a block. */
+  int max_block_size_y;     /** Maximum size of y dimension of a block. */
+  int max_block_size_z;     /** Maximum size of z dimension of a block. */
+  int max_threads_per_block; /** Maximum number of threads per block. */
 } CUDADevice;
 
 /**
@@ -41,7 +39,7 @@ typedef struct {
  * */
 typedef struct {
   CUDADevice *devices; /** Array of available devices. */
-  int deviceCount;     /** Number of CUDA devices available. */
+  int count;           /** Number of CUDA devices available. */
 } AvailableCUDADevices;
 
 /**
