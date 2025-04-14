@@ -4,25 +4,18 @@
  *  C API.
  *
  * */
+#include "../../cla/include/device_management.h"
 #include "../../cla/include/entities.h"
 #include "../../cla/include/matrix_operations.h"
 #include "../../cla/include/matrix_utils.h"
 #include "../../cla/include/vector_operations.h"
 #include "../../cla/include/vector_utils.h"
+#include "colors.h"
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 15
-#define RED "\x1B[31m"
-#define GRN "\x1B[32m"
-#define YEL "\x1B[33m"
-#define BLU "\x1B[34m"
-#define MAG "\x1B[35m"
-#define CYN "\x1B[36m"
-#define WHT "\x1B[37m"
-#define RESET "\x1B[0m"
-#define PREFIX BLU "[CLA][Test Suite] " RESET
+#define N_TESTS 24
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -30,34 +23,48 @@ typedef enum { SUCCESS, FAILED } RETURN_CODE;
 // Global variables for test suite
 int _TESTS_RUN = 0;
 int _TESTS_PASSED = 0;
+CUDADevice *_DEVICE = NULL;
 
-RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
-                                                    Vector *),
-                               int dims, double *a_value, double *b_value,
-                               double *target_value, double tol) {
+RETURN_CODE
+_test_vector_binop(Vector *(*operation)(Vector *, Vector *, Vector *), int dims,
+                   double *a_value, double *b_value, double *target_value,
+                   CUDADevice *device) {
   _TESTS_RUN++;
   RETURN_CODE code = SUCCESS;
 
   // Vector allocation
-  Vector a = {a_value, dims, NULL};
-  Vector b = {b_value, dims, NULL};
+  Vector *a = const_vector(dims, 0.0, NULL);
+  Vector *b = const_vector(dims, 0.0, NULL);
+  Vector *target = const_vector(dims, 0.0, NULL);
+
+  // Update values
+  for (int i = 0; i < dims; i++) {
+    a->arr[i] = a_value[i];
+    b->arr[i] = b_value[i];
+    target->arr[i] = target_value[i];
+  }
+
+  // Send to GPU if any
+  if (device != NULL) {
+    vector_to_cu(a, device);
+    vector_to_cu(b, device);
+    vector_to_cu(target, device);
+  }
 
   // Operation
-  Vector *result = operation(&a, &b, NULL);
+  Vector *result = operation(a, b, NULL);
 
   // Validation
-  for (int i = 0; i < dims; i++) {
-    if (fabs(result->arr[i] - target_value[i]) > tol) {
-      code = FAILED;
-      break;
-    }
-  }
+  code = vector_equals(result, target) ? SUCCESS : FAILED;
 
   if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
   // Clean-up
+  destroy_vector(a);
+  destroy_vector(b);
+  destroy_vector(target);
   destroy_vector(result);
 
   return code;
@@ -66,32 +73,38 @@ RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
 RETURN_CODE
 _test_matrix_binop(Matrix *(*operation)(Matrix *, Matrix *, Matrix *), int rows,
                    int columns, double **a_value, double **b_value,
-                   double **target_value, double tol) {
+                   double **target_value, CUDADevice *device) {
   _TESTS_RUN++;
   RETURN_CODE code = SUCCESS;
 
   // Matrix allocation
-  Matrix a = {a_value, rows, columns, NULL};
-  Matrix b = {b_value, rows, columns, NULL};
+  Matrix *a = const_matrix(rows, columns, 1.0, NULL);
+  Matrix *b = const_matrix(rows, columns, 0.0, NULL);
+  Matrix *target = const_matrix(rows, columns, -1.0, NULL);
 
-  // Operation
-  Matrix *result = operation(&a, &b, NULL);
-
-  // Validation
+  // Update values
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
-      if (fabs(result->arr[i][j] - target_value[i][j]) > tol) {
-        code = FAILED;
-        break;
-      }
+      a->arr[i][j] = a_value[i][j];
+      b->arr[i][j] = b_value[i][j];
+      target->arr[i][j] = target_value[i][j];
     }
   }
+
+  // Operation
+  Matrix *result = operation(a, b, NULL);
+
+  // Validation
+  code = matrix_equals(result, target) ? SUCCESS : FAILED;
 
   if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
   // Clean-up dynamically allocated matrices
+  destroy_matrix(a);
+  destroy_matrix(b);
+  destroy_matrix(target);
   destroy_matrix(result);
 
   return code;
@@ -102,7 +115,15 @@ RETURN_CODE test_vector_add_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {2.0, 1.5};
 
-  return _test_vector_binop(&vector_add, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_add, 2, a, b, target, NULL);
+}
+
+RETURN_CODE test_vector_add_cuda() {
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {2.0, 1.5};
+
+  return _test_vector_binop(&vector_add, 2, a, b, target, _DEVICE);
 }
 
 RETURN_CODE test_vector_sub_cpu() {
@@ -110,7 +131,15 @@ RETURN_CODE test_vector_sub_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {0.0, -0.5};
 
-  return _test_vector_binop(&vector_sub, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_sub, 2, a, b, target, NULL);
+}
+
+RETURN_CODE test_vector_sub_cuda() {
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {0.0, -0.5};
+
+  return _test_vector_binop(&vector_sub, 2, a, b, target, _DEVICE);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cpu() {
@@ -118,7 +147,16 @@ RETURN_CODE test_vector_element_wise_prod_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {3.0, -0.5};
 
-  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, NULL);
+}
+
+RETURN_CODE test_vector_element_wise_prod_cuda() {
+  double a[2] = {3.0, -0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {3.0, -0.5};
+
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target,
+                            _DEVICE);
 }
 
 RETURN_CODE test_vector_dot_product_cpu() {
@@ -191,7 +229,17 @@ RETURN_CODE test_matrix_add_cpu() {
 
   return _test_matrix_binop(&matrix_add, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_add_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {4.0, 0.5}, t_2[2] = {-4.0, 9.0};
+
+  return _test_matrix_binop(&matrix_add, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_sub_cpu() {
@@ -201,7 +249,17 @@ RETURN_CODE test_matrix_sub_cpu() {
 
   return _test_matrix_binop(&matrix_sub, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_sub_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {2.0, -1.5}, t_2[2] = {-6.0, 7.0};
+
+  return _test_matrix_binop(&matrix_sub, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_mult_cpu() {
@@ -211,7 +269,17 @@ RETURN_CODE test_matrix_mult_cpu() {
 
   return _test_matrix_binop(&matrix_mult, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_mult_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {2.0, 2.0};
+  double t_1[2] = {2.0, 2.0}, t_2[2] = {11.0, 11.0};
+
+  return _test_matrix_binop(&matrix_mult, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_mult_scalar_cpu() {
@@ -278,7 +346,126 @@ RETURN_CODE test_matrix_frobenius_norm() {
   return code;
 }
 
+RETURN_CODE test_cuda_devices() {
+  _TESTS_RUN++;
+  if (has_cuda()) {
+    char info[512];
+    printf(MAG "Found the following devices:\n" RESET);
+    for (int i = 0; i < cuda_get_device_count(); i++) {
+      printf(MAG "%s\n" RESET, device_to_str(get_device_by_id(i), info));
+    }
+  } else {
+    printf(RED "No device found." RESET);
+  }
+
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
+RETURN_CODE test_vector_move_cuda_cpu() {
+  _TESTS_RUN++;
+  if (!has_cuda()) {
+    _TESTS_PASSED++;
+    return SUCCESS;
+  }
+
+  // Get first device
+  CUDADevice *device = get_device_by_id(0);
+
+  // Create vector on CPU
+  Vector *a = const_vector(10, 1.0, NULL);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_vector != NULL) {
+    return FAILED;
+  }
+
+  // Move it to GPU
+  vector_to_cu(a, device);
+
+  // If not on GPU
+  if (a->arr != NULL || a->cu_vector == NULL || a->device != device) {
+    return FAILED;
+  }
+
+  // Move it back to CPU
+  vector_to_cpu(a);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_vector != NULL) {
+    return FAILED;
+  }
+
+  // Check if values are correct
+  for (int i = 0; i < a->dims; i++) {
+    if (fabs(a->arr[i] - 1.0) > 0.00001) {
+      destroy_vector(a);
+      return FAILED;
+    }
+  }
+
+  destroy_vector(a);
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
+RETURN_CODE test_matrix_move_cuda_cpu() {
+  _TESTS_RUN++;
+  if (!has_cuda()) {
+    _TESTS_PASSED++;
+    return SUCCESS;
+  }
+
+  double target = 232.5;
+
+  // Get first device
+  CUDADevice *device = get_device_by_id(0);
+
+  // Create matrix on CPU
+  Matrix *a = const_matrix(1000, 1000, target, NULL);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_matrix != NULL) {
+    return FAILED;
+  }
+
+  // Move it to GPU
+  matrix_to_cu(a, device);
+
+  // If not on GPU
+  if (a->arr != NULL || a->cu_matrix == NULL || a->device != device) {
+    return FAILED;
+  }
+
+  // Move it back to CPU
+  matrix_to_cpu(a);
+
+  // If not on CPU
+  if (a->arr == NULL || a->device != NULL || a->cu_matrix != NULL) {
+    return FAILED;
+  }
+
+  // Check if values are correct
+  for (int i = 0; i < a->rows; i++) {
+    for (int j = 0; j < a->columns; j++) {
+      if (fabs(a->arr[i][j] - target) > 0.00001) {
+        destroy_matrix(a);
+        return FAILED;
+      }
+    }
+  }
+
+  destroy_matrix(a);
+  _TESTS_PASSED++;
+  return SUCCESS;
+}
+
 int main() {
+  // Initialize default CUDA device
+  if (has_cuda()) {
+    _DEVICE = get_device_by_id(0);
+  }
+
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
                                            &test_vector_element_wise_prod_cpu,
@@ -293,7 +480,16 @@ int main() {
                                            &test_matrix_mult_scalar_cpu,
                                            &test_matrix_trace,
                                            &test_matrix_lpq_norm,
-                                           &test_matrix_frobenius_norm};
+                                           &test_matrix_frobenius_norm,
+                                           &test_cuda_devices,
+                                           &test_vector_move_cuda_cpu,
+                                           &test_vector_add_cuda,
+                                           &test_vector_sub_cuda,
+                                           &test_vector_element_wise_prod_cuda,
+                                           &test_matrix_move_cuda_cpu,
+                                           &test_matrix_add_cuda,
+                                           &test_matrix_sub_cuda,
+                                           &test_matrix_mult_cuda};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -308,16 +504,29 @@ int main() {
                              "test_matrix_mult_scalar_cpu",
                              "test_matrix_trace",
                              "test_matrix_lpq_norm",
-                             "test_frobenius_norm"};
+                             "test_frobenius_norm",
+                             "test_cuda_devices",
+                             "test_vector_move_cuda_cpu",
+                             "test_vector_add_cuda",
+                             "test_vector_sub_cuda",
+                             "test_vector_element_wise_prod_cuda",
+                             "test_matrix_move_cuda_cpu",
+                             "test_matrix_add_cuda",
+                             "test_matrix_sub_cuda",
+                             "test_matrix_mult_cuda"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
-    printf(PREFIX "Ran test \"%s\": %s\n", names[i],
+    printf(PREFIX "Ran test #%d \"%s\": %s\n", i + 1, names[i],
            test_fn[i]() == SUCCESS ? GRN "SUCCESS" RESET : RED "FAILED" RESET);
   }
 
   printf(PREFIX "Total tests: %d | Tests passed: %d | Tests failed: "
                 "%d\n",
          _TESTS_RUN, _TESTS_PASSED, _TESTS_RUN - _TESTS_PASSED);
+
+  // Clear devices
+  clear_devices();
+
   return (_TESTS_PASSED == _TESTS_RUN) ? 0 : -1;
 }

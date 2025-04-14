@@ -1,3 +1,4 @@
+#include "../include/device_management.h"
 #include "../include/entities.h"
 #include "../include/matrix_utils.h"
 #include <assert.h>
@@ -16,10 +17,11 @@ Matrix *maybe_alloc_matrix(Matrix *ptr, int rows, int columns,
 }
 
 Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device) {
+  // Initialize on CPU
   Matrix *matrix = (Matrix *)malloc(sizeof(Matrix));
   matrix->rows = rows;
   matrix->columns = columns;
-  matrix->device = device;
+  matrix->device = NULL;
   matrix->cu_matrix = NULL;
 
   // Initializing array
@@ -34,10 +36,19 @@ Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device) {
   // Store pointer
   matrix->arr = vectors;
 
+  // If device is set, move to GPU
+  if (device != NULL) {
+    matrix_to_cu(matrix, device);
+  }
+
   return matrix;
 }
 
 void destroy_matrix(Matrix *matrix) {
+  if (matrix->device != NULL) {
+    matrix_to_cpu(matrix);
+  }
+
   for (int i = 0; i < matrix->rows; i++) {
     free(matrix->arr[i]);
   }
@@ -46,14 +57,28 @@ void destroy_matrix(Matrix *matrix) {
 }
 
 Matrix *copy_matrix(Matrix *a, Matrix *dst) {
+  // Precondition
+  assert(matrix_has_same_dims_same_devices(a, dst, a));
+
+  CUDADevice *device = a->device;
   int rows = a->rows;
   int columns = a->columns;
-  dst = maybe_alloc_matrix(dst, rows, columns, a->device);
+  dst = maybe_alloc_matrix(dst, rows, columns, device);
+
+  if (device != NULL) {
+    matrix_to_cpu(a);
+    matrix_to_cpu(dst);
+  }
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
       dst->arr[i][j] = a->arr[i][j];
     }
+  }
+
+  if (device != NULL) {
+    matrix_to_cu(a, device);
+    matrix_to_cu(dst, device);
   }
 
   return dst;

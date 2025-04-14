@@ -1,4 +1,5 @@
 #include "../include/cuda_utils.h"
+#include "../include/device_management.h"
 #include "../include/entities.h"
 #include "../include/vector_operations.h"
 #include "../include/vector_utils.h"
@@ -10,11 +11,26 @@ bool vector_equals(Vector *a, Vector *b) {
   assert(vector_has_same_dims_same_devices(a, b, a));
 
   // Guarantee a and b are on CPU
-  // ...
+  CUDADevice *device = a->device;
+  vector_to_cpu(a);
+  vector_to_cpu(b);
+
+  // Operation
   for (int i = 0; i < a->dims; i++) {
     if (fabs(a->arr[i] - b->arr[i]) > 0.000001) {
+      if (device != a->device) {
+        // Maybe send them back to GPU
+        vector_to_cu(a, device);
+        vector_to_cu(b, device);
+      }
       return false;
     }
+  }
+
+  if (device != a->device) {
+    // Maybe send them back to GPU
+    vector_to_cu(a, device);
+    vector_to_cu(b, device);
   }
 
   return true;

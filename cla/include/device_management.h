@@ -14,8 +14,30 @@ extern AvailableCUDADevices
 
 /**
  * Populates the `DEVICES` global variable.
+ * If is already populated, silently ignores.
+ * This function is automatically called whenever
+ *  a CUDA operation is required.
  * */
 void populate_devices();
+
+/**
+ * Clears the `DEVICES` global variable.
+ * If it is already clear, silently ignores.
+ * This function should be used to clear allocated
+ *  memory (i.e., cleanup, etc).
+ * */
+void clear_devices();
+
+/** 
+ * Returns whether the system has any CUDA
+ *  capable device.
+ * */
+bool has_cuda(); 
+
+/** 
+ * Returns the number of CUDA devices.
+ * */
+int cuda_get_device_count();
 
 /**
  * Return a device by the `id` property.
@@ -31,6 +53,13 @@ CUDADevice *get_device_by_id(int id);
 CUDADevice *get_device_by_name(char *name);
 
 /**
+ * Converts device information to string.
+ * If dst is NULL, allocates a string with 512
+ *  characters (null-terminated).
+ * */
+char *device_to_str(CUDADevice *device, char *dst);
+
+/**
  * Moves the `src` vector to the specified CUDA
  *  device using the selected strategy.
  * If `device` is NULL throws an assertion error.
@@ -39,38 +68,36 @@ CUDADevice *get_device_by_name(char *name);
  * This function set the `cu_vector` property
  *  of the Vector struct.
  * */
-Vector *vector_to_cu(Vector *src, CUDADevice *device, CopyStrategy strategy);
+Vector *vector_to_cu(Vector *src, CUDADevice *device);
 
 /**
  * Moves the `src` vector from the CUDA device
- *  back to the CPU employing the selected
- *  strategy.
+ *  back to the CPU.
  * If the vector isn't in GPU, silent return
  *  `src` without any additional checks.
  * This function unset the `cu_vector` property
  *  of the Vector struct.
  * */
-Vector *vector_to_cpu(Vector *src, CopyStrategy strategy);
+Vector *vector_to_cpu(Vector *src);
 
 /**
  * Moves the `src` matrix to the specified CUDA
- *  device using the selected strategy.
+ *  device.
  * If `device` is NULL throws an assertion error.
  * This function presumes the `device` is in the
  *  `DEVICES` global variable.
  * This function set the `cu_matrix` property
  *  of the Matrix struct.
  * */
-Matrix *matrix_to_cu(Matrix *src, CUDADevice *device, CopyStrategy strategy);
+Matrix *matrix_to_cu(Matrix *src, CUDADevice *device);
 
 /**
  * Moves the `src` vector from the CUDA device
- *  back to the CPU employing the selected
- *  strategy.
+ *  back to the CPU.
  * If the vector isn't in GPU, silent return
  *  `src` without any additional checks.
  * This function unset the `cu_matrix` property
  *  of the Matrix struct.
  * */
-Matrix *matrix_to_cpu(Matrix *src, CUDADevice *device, CopyStrategy strategy);
+Matrix *matrix_to_cpu(Matrix *src);
 #endif

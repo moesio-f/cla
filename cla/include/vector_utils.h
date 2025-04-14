@@ -36,7 +36,7 @@ void destroy_vector(Vector *vector);
 
 /**
  * Copy vector from src to dst (if NULL,
- *  automatically allocates memory)
+ *  automatically allocates memory).
  * */
 Vector *copy_vector(Vector *src, Vector *dst);
 

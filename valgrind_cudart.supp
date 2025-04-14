@@ -1,0 +1,47 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:*/libcuda.so.*
+   ...
+   obj:*/libcudart.so.*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   obj:*/libcuda.so.*
+   ...
+   obj:*/libcuda.so.*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:*/libcuda.so.*
+   ...
+   obj:*/libcuda.so.*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   ...
+   obj:*/libcuda.so.*
+   ...
+   fun:pthread_once*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   ...
+   obj:*/libcuda.so.*
+   ...
+   obj:*/libcudart.so.*
+}

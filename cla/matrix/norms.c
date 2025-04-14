@@ -1,3 +1,4 @@
+#include "../include/device_management.h"
 #include "../include/entities.h"
 #include "../include/matrix_operations.h"
 #include "../include/matrix_utils.h"
@@ -9,8 +10,10 @@ double matrix_lpq_norm(Matrix *a, double p, double q) {
   assert(p >= 1.0 && q >= 1.0);
   double norm = 0.0;
 
-  // Guarantee a is on CPU
-  // ...
+  // Guarantee a and b are on CPU
+  CUDADevice *device = a->device;
+  matrix_to_cpu(a);
+
   for (int j = 0; j < a->columns; j++) {
     double column_norm = 0.0;
 
@@ -22,6 +25,12 @@ double matrix_lpq_norm(Matrix *a, double p, double q) {
   }
 
   norm = pow(norm, 1.0 / q);
+
+  // Maybe send back to GPU
+  if (a->device != device) {
+    matrix_to_cu(a, device);
+  }
+
   return norm;
 }
 
