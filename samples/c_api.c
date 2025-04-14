@@ -73,7 +73,7 @@ int main() {
     // Devices can be selected by ID or name.
     CUDADevice *device = get_device_by_id(0);
     char dev_info[512];
-    printf("The following device was selected:\n%s\n",
+    printf("The following device was selected:\n%s\n\n",
            device_to_str(device, dev_info));
 
     // This function expects to handle matrix/vectors
