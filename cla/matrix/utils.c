@@ -86,6 +86,8 @@ Matrix *copy_matrix(Matrix *a, Matrix *dst) {
 
 void print_matrix(Matrix *a, char *suffix) {
   int i, j;
+  CUDADevice *device = a->device;
+  matrix_to_cpu(a);
 
   for (i = 0; i < a->rows; i++) {
     printf("\n[");
@@ -98,6 +100,10 @@ void print_matrix(Matrix *a, char *suffix) {
   if (suffix != NULL) {
     printf("%s", suffix);
   }
+
+  if (device != NULL) {
+    matrix_to_cu(a, device);
+  }
 }
 
 Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
@@ -107,7 +113,10 @@ Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
     columns = 1;
   }
 
-  Matrix *matrix = const_matrix(rows, columns, 0.0, a->device);
+  // Make assignments on CPU
+  CUDADevice *device = a->device;
+  vector_to_cpu(a);
+  Matrix *matrix = const_matrix(rows, columns, 0.0, NULL);
   double *target = a->arr;
 
   // Assign values
@@ -120,6 +129,13 @@ Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
       matrix->arr[i][0] = a->arr[i];
     }
   }
+
+  // Maybe send objects back to GPU
+  if (device != NULL) {
+    vector_to_cu(a, device);
+    matrix_to_cu(matrix, device);
+  }
+
   return matrix;
 }
 
