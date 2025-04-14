@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 19
+#define N_TESTS 21
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -23,34 +23,48 @@ typedef enum { SUCCESS, FAILED } RETURN_CODE;
 // Global variables for test suite
 int _TESTS_RUN = 0;
 int _TESTS_PASSED = 0;
+CUDADevice *_DEVICE = NULL;
 
-RETURN_CODE _test_vector_binop(Vector *(*operation)(Vector *, Vector *,
-                                                    Vector *),
-                               int dims, double *a_value, double *b_value,
-                               double *target_value, double tol) {
+RETURN_CODE
+_test_vector_binop(Vector *(*operation)(Vector *, Vector *, Vector *), int dims,
+                   double *a_value, double *b_value, double *target_value,
+                   CUDADevice *device, double tol) {
   _TESTS_RUN++;
   RETURN_CODE code = SUCCESS;
 
   // Vector allocation
-  Vector a = {a_value, dims, NULL};
-  Vector b = {b_value, dims, NULL};
+  Vector *a = const_vector(dims, 0.0, NULL);
+  Vector *b = const_vector(dims, 0.0, NULL);
+  Vector *target = const_vector(dims, 0.0, NULL);
+
+  // Update values
+  for (int i = 0; i < dims; i++) {
+    a->arr[i] = a_value[i];
+    b->arr[i] = b_value[i];
+    target->arr[i] = target_value[i];
+  }
+
+  // Send to GPU if any
+  if (device != NULL) {
+    vector_to_cu(a, device);
+    vector_to_cu(b, device);
+    vector_to_cu(target, device);
+  }
 
   // Operation
-  Vector *result = operation(&a, &b, NULL);
+  Vector *result = operation(a, b, NULL);
 
   // Validation
-  for (int i = 0; i < dims; i++) {
-    if (fabs(result->arr[i] - target_value[i]) > tol) {
-      code = FAILED;
-      break;
-    }
-  }
+  code = vector_equals(result, target) ? SUCCESS : FAILED;
 
   if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
   // Clean-up
+  destroy_vector(a);
+  destroy_vector(b);
+  destroy_vector(target);
   destroy_vector(result);
 
   return code;
@@ -95,7 +109,15 @@ RETURN_CODE test_vector_add_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {2.0, 1.5};
 
-  return _test_vector_binop(&vector_add, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_add, 2, a, b, target, NULL, 0.001);
+}
+
+RETURN_CODE test_vector_add_cuda() {
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {2.0, 1.5};
+
+  return _test_vector_binop(&vector_add, 2, a, b, target, _DEVICE, 0.001);
 }
 
 RETURN_CODE test_vector_sub_cpu() {
@@ -103,7 +125,15 @@ RETURN_CODE test_vector_sub_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {0.0, -0.5};
 
-  return _test_vector_binop(&vector_sub, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_sub, 2, a, b, target, NULL, 0.001);
+}
+
+RETURN_CODE test_vector_sub_cuda() {
+  double a[2] = {1.0, 0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {0.0, -0.5};
+
+  return _test_vector_binop(&vector_sub, 2, a, b, target, _DEVICE, 0.001);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cpu() {
@@ -111,7 +141,17 @@ RETURN_CODE test_vector_element_wise_prod_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {3.0, -0.5};
 
-  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, 0.001);
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, NULL,
+                            0.001);
+}
+
+RETURN_CODE test_vector_element_wise_prod_cuda() {
+  double a[2] = {3.0, -0.5};
+  double b[2] = {1.0, 1.0};
+  double target[2] = {3.0, -0.5};
+
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, _DEVICE,
+                            0.001);
 }
 
 RETURN_CODE test_vector_dot_product_cpu() {
@@ -334,28 +374,6 @@ RETURN_CODE test_vector_move_cuda_cpu() {
   return SUCCESS;
 }
 
-RETURN_CODE test_cuda_vector_add() {
-  _TESTS_RUN++;
-  if (has_cuda()) {
-    CUDADevice *device = get_device_by_id(0);
-    Vector *a = const_vector(100000, 1.0, device);
-    Vector *b = const_vector(100000, 2.0, device);
-    Vector *target = const_vector(100000, 3.0, device);
-    Vector *result = vector_add(a, b, NULL);
-    bool equals = vector_equals(result, target);
-    destroy_vector(a);
-    destroy_vector(b);
-    destroy_vector(target);
-    destroy_vector(result);
-    if (!equals) {
-      return FAILED;
-    }
-  }
-
-  _TESTS_PASSED++;
-  return SUCCESS;
-}
-
 RETURN_CODE test_matrix_move_cuda_cpu() {
   _TESTS_RUN++;
   if (!has_cuda()) {
@@ -408,8 +426,10 @@ RETURN_CODE test_matrix_move_cuda_cpu() {
 }
 
 int main() {
-  // Initialize devices
-  populate_devices();
+  // Initialize default CUDA device
+  if (has_cuda()) {
+    _DEVICE = get_device_by_id(0);
+  }
 
   RETURN_CODE (*test_fn[N_TESTS])(void) = {&test_vector_add_cpu,
                                            &test_vector_sub_cpu,
@@ -428,7 +448,9 @@ int main() {
                                            &test_matrix_frobenius_norm,
                                            &test_cuda_devices,
                                            &test_vector_move_cuda_cpu,
-                                           &test_cuda_vector_add,
+                                           &test_vector_add_cuda,
+                                           &test_vector_sub_cuda,
+                                           &test_vector_element_wise_prod_cuda,
                                            &test_matrix_move_cuda_cpu};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
@@ -447,7 +469,9 @@ int main() {
                              "test_frobenius_norm",
                              "test_cuda_devices",
                              "test_vector_move_cuda_cpu",
-                             "test_cuda_vector_add",
+                             "test_vector_add_cuda",
+                             "test_vector_sub_cuda",
+                             "test_vector_element_wise_prod_cuda",
                              "test_matrix_move_cuda_cpu"};
 
   printf(PREFIX "Tests started...\n");

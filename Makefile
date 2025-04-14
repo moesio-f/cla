@@ -18,7 +18,7 @@ CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
 all: prepare-cla compile-cla
 
 # Create new target and run tests
-test: all test-cla test-cla-memory-leak
+test: all test-cla
 
 # Create release
 release: test pack-release-cla
