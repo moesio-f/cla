@@ -1,4 +1,5 @@
 #include "../include/device_management.h"
+#include "../include/constants.h"
 #include "../include/entities.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +32,7 @@ CUDADevice *get_device_by_name(char *name) {
 
 char *device_to_str(CUDADevice *device, char *dst) {
   if (dst == NULL) {
-    dst = (char *)malloc(sizeof(char) * 512);
+    dst = (char *)malloc(sizeof(char) * STR_SIZE);
   }
 
   // Format string

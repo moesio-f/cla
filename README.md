@@ -39,95 +39,9 @@ For the C-only API, obtain the latest binaries and headers from the [releases](h
 
 The C API provides structs (see [`cla/include/entities.h`](cla/include/entities.h)) and functions (see [`cla/include/vector_operations.h`](cla/include/vector_operations.h), [`cla/include/matrix_operations.h`](cla/include/matrix_operations.h)) that operate over those structs. The two main entities are `Vector` and `Matrix`. A vector or matrix can reside in either the CPU memory (host memory, from CUDA's terminology) or GPU memory (device memory). Those structs always keep metadata on the CPU (i.e., shape, current device), which allows the CPU to coordinate most of the workflow. In order for an operation to be run on the GPU the entities must first be copied to the GPU's memory.
 
-A sample example is as follows:
+For a quickstart, compile the [samples/c_api.c](samples/c_api.c) with: (i) `gcc -l cla <filename>.c`, if you installed the library system-wide (i.e., copied the headers to `/usr/include/` and shared library to `/usr/lib/`); or (ii) `gcc -I <path-to-include> -L <path-to-root-wih-libcla> -l cla <filename>.c`. 
 
-```c
-#include "cla/include/entities.h"
-#include "cla/include/matrix_operations.h"
-#include "cla/include/matrix_utils.h"
-#include "cla/include/vector_operations.h"
-#include "cla/include/vector_utils.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-void print_vector_result(char *title, Vector *a, Vector *b, Vector *dst,
-                         char operation) {
-  printf("%s\n", title);
-  print_vector(a, " ");
-  printf("%c ", operation);
-  print_vector(b, " ");
-  printf("= ");
-  print_vector(dst, "\n\n");
-}
-
-void print_matrix_result(char *title, Matrix *a, Matrix *b, Matrix *dst,
-                         char operation) {
-  printf("%s", title);
-  print_matrix(a, "\n");
-  printf("%c", operation);
-  print_matrix(b, "\n");
-  printf("=");
-  print_matrix(dst, "\n\n");
-}
-
-int main() {
-  /** Some vector operations. */
-  // We can instantiate vectors directly
-  Vector vec_a = {(double[2]){1.0, 2.0}, 2, NULL, NULL};
-
-  // ...or using constructors
-  Vector *vec_b = create_vector(2, NULL, -1.0, 0.5);
-  Vector *vec_dst = const_vector(2, 0.0, NULL);
-
-  // Addition
-  vector_add(&vec_a, vec_b, vec_dst);
-  print_vector_result("Vector Addition", &vec_a, vec_b, vec_dst, '+');
-
-  // Subtraction
-  vector_sub(&vec_a, vec_b, vec_dst);
-  print_vector_result("Vector Subtraction", &vec_a, vec_b, vec_dst, '-');
-
-  // Element-wise product
-  vector_element_wise_prod(&vec_a, vec_b, vec_dst);
-  print_vector_result("Vector Element wise product", &vec_a, vec_b, vec_dst,
-                      '*');
-
-  // For vectors created by constructors, we can use the
-  //    utility functions to clean-up their memory.
-  destroy_vector(vec_b);
-  destroy_vector(vec_dst);
-
-  /** Some matrix operations. */
-  // Matrix construction is a little more cumbersome
-  //    without constructors. The test suite contains
-  //    some examples.
-  Matrix *mat_a = const_matrix(2, 2, 1.0, NULL);
-  Matrix *mat_b = const_matrix(2, 2, 0.5, NULL);
-  Matrix *mat_dst = const_matrix(2, 2, 0.0, NULL);
-
-  // We can access the underlying data store
-  //    and make changes
-  mat_a->arr[0][0] = 2.0;
-  mat_b->arr[1][1] = -3.0;
-
-  // Addition
-  matrix_add(mat_a, mat_b, mat_dst);
-  print_matrix_result("Matrix Addition", mat_a, mat_b, mat_dst, '+');
-
-  // Matrix multiplication
-  matrix_mult(mat_a, mat_b, mat_dst);
-  print_matrix_result("Matrix Multiplication", mat_a, mat_b, mat_dst, '*');
-
-  // Clean-up
-  destroy_matrix(mat_a);
-  destroy_matrix(mat_b);
-  destroy_matrix(mat_dst);
-
-  return 0;
-}
-```
-
-Compile with: (i) `gcc -l cla <filename>.c`, if you installed the library system-wide (i.e., copied the headers to `/usr/include/` and shared library to `/usr/lib/`); or (ii) `gcc -I <path-to-include> -L <path-to-root-wih-libcla> -l cla <filename>.c`. To run, make the `.so` findable by the executable (i.e., either update `LD_LIBRARY_PATH` environment variable or include it on `/usr/lib`/`/lib`).
+To run, make the `libcla.so` findable by the executable (i.e., either update `LD_LIBRARY_PATH` environment variable or include it on `/usr/lib`) and run in the shell of your preference (i.e., `./a.out`).
 
 ## Python API
 
