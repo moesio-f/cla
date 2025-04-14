@@ -1,3 +1,4 @@
+#include "../include/constants.h"
 #include "../include/cuda_utils.h"
 #include "../include/device_management.h"
 #include "../include/entities.h"
@@ -17,7 +18,7 @@ bool matrix_equals(Matrix *a, Matrix *b) {
 
   for (int i = 0; i < a->rows; i++) {
     for (int j = 0; j < a->columns; j++) {
-      if (fabs(a->arr[i][j] - b->arr[i][j]) > 0.000001) {
+      if (fabs(a->arr[i][j] - b->arr[i][j]) > D_TOL) {
         return false;
       }
     }

@@ -21,16 +21,17 @@ add_library(${CMAKE_PROJECT_NAME} SHARED)
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 17)
 
 # Add all subdirectories that compose this library
+add_subdirectory(include)
 add_subdirectory(cuda)
 add_subdirectory(matrix)
 add_subdirectory(vector)
-add_subdirectory(include)
+add_subdirectory(utils)
 
 # Add external libraries
 find_library(math m)
 
 # Link external libraries to cla
-target_link_libraries(${CMAKE_PROJECT_NAME} ${math} cudart)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${math} CUDA::cudart)
 
 # Add test targets
 add_executable(test_suite ../test/c/suite.c)
