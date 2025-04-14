@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Setting project name, version and language
 project(cla
-        VERSION 0.1
+        VERSION 0.2
         LANGUAGES CUDA C)
 
 # Find CUDAToolkit
