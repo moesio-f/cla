@@ -95,9 +95,20 @@ extern "C" Matrix *cpu_gpu_conditional_apply_matrix_operator(
     // If it's CPU, just call it directly
     cpu_op(a, b, dst);
   } else {
-    // If it's GPU, add memory management
-    // and use <<<...,...>>> syntax;
-    gpu_op<<<1, 1>>>(a, b, dst);
+    CUDADevice *device = a->device;
+
+    // Simple algorithm to find an appropriate
+    //  number of blocks/threads based on device.
+    int max_threads = device->max_threads_per_block;
+    int max_threads_dim = (int)floor(sqrt(max_threads));
+    int rows = dst->rows, columns = dst->columns;
+    dim3 n_threads(max_threads_dim > rows ? rows : max_threads_dim,
+                   max_threads_dim > columns ? columns : max_threads_dim);
+    dim3 n_blocks(1 + (int)ceil((rows - n_threads.x) / n_threads.x),
+                  1 + (int)ceil((columns - n_threads.y) / n_threads.y));
+
+    // Launch the kernel with the cu_vectors
+    gpu_op<<<n_blocks, n_threads>>>(a->cu_matrix, b->cu_matrix, dst->cu_matrix);
   }
 
   // Return dst
@@ -116,9 +127,28 @@ extern "C" Matrix *cpu_gpu_conditional_apply_scalar_matrix_operator(
     // If it's CPU, just call it directly
     cpu_op(&a, b, dst);
   } else {
-    // If it's GPU, add memory management
-    // and use <<<...,...>>> syntax;
-    gpu_op<<<1, 1>>>(&a, b, dst);
+    CUDADevice *device = b->device;
+
+    // Simple algorithm to find an appropriate
+    //  number of blocks/threads based on device.
+    int max_threads = device->max_threads_per_block;
+    int max_threads_dim = (int)floor(sqrt(max_threads));
+    int rows = dst->rows, columns = dst->columns;
+    dim3 n_threads(max_threads_dim > rows ? rows : max_threads_dim,
+                   max_threads_dim > columns ? columns : max_threads_dim);
+    dim3 n_blocks(1 + (int)ceil((rows - n_threads.x) / n_threads.x),
+                  1 + (int)ceil((columns - n_threads.y) / n_threads.y));
+
+    // Allocate temporary memory for double
+    double *cu_a = NULL;
+    cudaMalloc(&cu_a, sizeof(double));
+    cudaMemcpy(cu_a, &a, sizeof(double), cudaMemcpyHostToDevice);
+
+    // Launch the kernel with the cu_vectors
+    gpu_op<<<n_blocks, n_threads>>>(cu_a, b->cu_matrix, dst->cu_matrix);
+
+    // Deallocate memory
+    cudaFree(cu_a);
   }
 
   // Return dst

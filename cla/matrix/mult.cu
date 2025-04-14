@@ -6,7 +6,17 @@ extern "C" {
 }
 __host__ __device__ void _matrix_mult(Matrix *a, Matrix *b, Matrix *dst) {
 #if defined(__CUDA__ARCH__)
-  return;
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (i < dst->rows && j < dst->columns) {
+    double sum = 0.0;
+    for (int k = 0; k < a->columns; k++) {
+      sum += a->arr[i][k] * b->arr[k][j];
+    }
+    dst->arr[i][j] = sum;
+  }
+
 #else
   for (int i = 0; i < dst->rows; i++) {
     for (int j = 0; j < dst->columns; j++) {
@@ -28,6 +38,6 @@ __global__ void _cu_matrix_mult(Matrix *a, Matrix *b, Matrix *dst) {
 
 extern "C" Matrix *matrix_mult(Matrix *a, Matrix *b, Matrix *dst) {
   return cpu_gpu_conditional_apply_matrix_operator(
-      &_matrix_mult, NULL, &matrix_is_mult_compat, a, b, dst, a->rows,
-      b->columns, a->device);
+      &_matrix_mult, &_cu_matrix_mult, &matrix_is_mult_compat, a, b, dst,
+      a->rows, b->columns, a->device);
 }

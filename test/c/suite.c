@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 21
+#define N_TESTS 24
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -28,7 +28,7 @@ CUDADevice *_DEVICE = NULL;
 RETURN_CODE
 _test_vector_binop(Vector *(*operation)(Vector *, Vector *, Vector *), int dims,
                    double *a_value, double *b_value, double *target_value,
-                   CUDADevice *device, double tol) {
+                   CUDADevice *device) {
   _TESTS_RUN++;
   RETURN_CODE code = SUCCESS;
 
@@ -73,32 +73,38 @@ _test_vector_binop(Vector *(*operation)(Vector *, Vector *, Vector *), int dims,
 RETURN_CODE
 _test_matrix_binop(Matrix *(*operation)(Matrix *, Matrix *, Matrix *), int rows,
                    int columns, double **a_value, double **b_value,
-                   double **target_value, double tol) {
+                   double **target_value, CUDADevice *device) {
   _TESTS_RUN++;
   RETURN_CODE code = SUCCESS;
 
   // Matrix allocation
-  Matrix a = {a_value, rows, columns, NULL};
-  Matrix b = {b_value, rows, columns, NULL};
+  Matrix *a = const_matrix(rows, columns, 1.0, NULL);
+  Matrix *b = const_matrix(rows, columns, 0.0, NULL);
+  Matrix *target = const_matrix(rows, columns, -1.0, NULL);
 
-  // Operation
-  Matrix *result = operation(&a, &b, NULL);
-
-  // Validation
+  // Update values
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
-      if (fabs(result->arr[i][j] - target_value[i][j]) > tol) {
-        code = FAILED;
-        break;
-      }
+      a->arr[i][j] = a_value[i][j];
+      b->arr[i][j] = b_value[i][j];
+      target->arr[i][j] = target_value[i][j];
     }
   }
+
+  // Operation
+  Matrix *result = operation(a, b, NULL);
+
+  // Validation
+  code = matrix_equals(result, target) ? SUCCESS : FAILED;
 
   if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
   // Clean-up dynamically allocated matrices
+  destroy_matrix(a);
+  destroy_matrix(b);
+  destroy_matrix(target);
   destroy_matrix(result);
 
   return code;
@@ -109,7 +115,7 @@ RETURN_CODE test_vector_add_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {2.0, 1.5};
 
-  return _test_vector_binop(&vector_add, 2, a, b, target, NULL, 0.001);
+  return _test_vector_binop(&vector_add, 2, a, b, target, NULL);
 }
 
 RETURN_CODE test_vector_add_cuda() {
@@ -117,7 +123,7 @@ RETURN_CODE test_vector_add_cuda() {
   double b[2] = {1.0, 1.0};
   double target[2] = {2.0, 1.5};
 
-  return _test_vector_binop(&vector_add, 2, a, b, target, _DEVICE, 0.001);
+  return _test_vector_binop(&vector_add, 2, a, b, target, _DEVICE);
 }
 
 RETURN_CODE test_vector_sub_cpu() {
@@ -125,7 +131,7 @@ RETURN_CODE test_vector_sub_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {0.0, -0.5};
 
-  return _test_vector_binop(&vector_sub, 2, a, b, target, NULL, 0.001);
+  return _test_vector_binop(&vector_sub, 2, a, b, target, NULL);
 }
 
 RETURN_CODE test_vector_sub_cuda() {
@@ -133,7 +139,7 @@ RETURN_CODE test_vector_sub_cuda() {
   double b[2] = {1.0, 1.0};
   double target[2] = {0.0, -0.5};
 
-  return _test_vector_binop(&vector_sub, 2, a, b, target, _DEVICE, 0.001);
+  return _test_vector_binop(&vector_sub, 2, a, b, target, _DEVICE);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cpu() {
@@ -141,8 +147,7 @@ RETURN_CODE test_vector_element_wise_prod_cpu() {
   double b[2] = {1.0, 1.0};
   double target[2] = {3.0, -0.5};
 
-  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, NULL,
-                            0.001);
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, NULL);
 }
 
 RETURN_CODE test_vector_element_wise_prod_cuda() {
@@ -150,8 +155,8 @@ RETURN_CODE test_vector_element_wise_prod_cuda() {
   double b[2] = {1.0, 1.0};
   double target[2] = {3.0, -0.5};
 
-  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target, _DEVICE,
-                            0.001);
+  return _test_vector_binop(&vector_element_wise_prod, 2, a, b, target,
+                            _DEVICE);
 }
 
 RETURN_CODE test_vector_dot_product_cpu() {
@@ -224,7 +229,17 @@ RETURN_CODE test_matrix_add_cpu() {
 
   return _test_matrix_binop(&matrix_add, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_add_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {4.0, 0.5}, t_2[2] = {-4.0, 9.0};
+
+  return _test_matrix_binop(&matrix_add, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_sub_cpu() {
@@ -234,7 +249,17 @@ RETURN_CODE test_matrix_sub_cpu() {
 
   return _test_matrix_binop(&matrix_sub, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_sub_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {1.0, 1.0};
+  double t_1[2] = {2.0, -1.5}, t_2[2] = {-6.0, 7.0};
+
+  return _test_matrix_binop(&matrix_sub, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_mult_cpu() {
@@ -244,7 +269,17 @@ RETURN_CODE test_matrix_mult_cpu() {
 
   return _test_matrix_binop(&matrix_mult, 2, 2, (double *[2]){a_1, a_2},
                             (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
-                            0.001);
+                            NULL);
+}
+
+RETURN_CODE test_matrix_mult_cuda() {
+  double a_1[2] = {3.0, -0.5}, a_2[2] = {-5.0, 8.0};
+  double b_1[2] = {1.0, 1.0}, b_2[2] = {2.0, 2.0};
+  double t_1[2] = {2.0, 2.0}, t_2[2] = {11.0, 11.0};
+
+  return _test_matrix_binop(&matrix_mult, 2, 2, (double *[2]){a_1, a_2},
+                            (double *[2]){b_1, b_2}, (double *[2]){t_1, t_2},
+                            _DEVICE);
 }
 
 RETURN_CODE test_matrix_mult_scalar_cpu() {
@@ -451,7 +486,10 @@ int main() {
                                            &test_vector_add_cuda,
                                            &test_vector_sub_cuda,
                                            &test_vector_element_wise_prod_cuda,
-                                           &test_matrix_move_cuda_cpu};
+                                           &test_matrix_move_cuda_cpu,
+                                           &test_matrix_add_cuda,
+                                           &test_matrix_sub_cuda,
+                                           &test_matrix_mult_cuda};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -472,7 +510,10 @@ int main() {
                              "test_vector_add_cuda",
                              "test_vector_sub_cuda",
                              "test_vector_element_wise_prod_cuda",
-                             "test_matrix_move_cuda_cpu"};
+                             "test_matrix_move_cuda_cpu",
+                             "test_matrix_add_cuda",
+                             "test_matrix_sub_cuda",
+                             "test_matrix_mult_cuda"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
