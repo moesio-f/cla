@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from pycla.bin import CLA
+from ctypes import POINTER
+from pycla.bin.cla import CLA, _CUDADevice
 
 
 @dataclass(frozen=True)
@@ -10,6 +11,9 @@ class CUDADevice:
     max_grid: tuple[int, int, int]
     max_block: tuple[int, int, int]
     max_threads_per_block: int
+
+    def short_str(self) -> str:
+        return f'CUDADevice(id={self.id}, name="{self.name}")'
 
 
 class Devices:
@@ -24,8 +28,10 @@ class Devices:
     def __init__(self):
         # Initialize devices
         self._devices = []
+        self._pointers = []
         for i in range(CLA.cuda_device_count):
-            dev = CLA.get_device_by_id(i).contents
+            self._pointers.append(CLA.get_device_by_id(i))
+            dev = self._pointers[i].contents
             self._devices.append(
                 CUDADevice(
                     id=dev.id,
@@ -66,3 +72,9 @@ class Devices:
 
     def __str__(self) -> str:
         return f"[{','.join(self._devices)}]"
+
+    def _get_pointer(self, device: int | str | CUDADevice) -> POINTER(_CUDADevice):
+        if isinstance(device, int) or isinstance(device, str):
+            device = self[device]
+
+        return self._pointers[device.id]
