@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 24
+#define N_TESTS 25
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -216,6 +216,62 @@ RETURN_CODE test_vector_equals() {
 
   if (vector_equals(&a, &a)) {
     code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  return code;
+}
+
+RETURN_CODE test_vector_copy() {
+  _TESTS_RUN++;
+  RETURN_CODE code = SUCCESS;
+
+  // CPU vectors
+  Vector *a = const_vector(100, -20.0, NULL);
+  Vector *cpu_dst = const_vector(100, -84.0, NULL);
+
+  // GPU vectors
+  Vector *b = const_vector(100, 10.0, _DEVICE);
+  Vector *gpu_dst = const_vector(100, 32.0, _DEVICE);
+
+  // Test multiple combinations of copies
+  Vector *src[2] = {a, b};
+  Vector *dst[3] = {cpu_dst, gpu_dst, NULL};
+  for (int src_idx = 0; src_idx < 3; src_idx++) {
+    for (int dst_idx = 0; dst_idx < 3; dst_idx++) {
+      Vector *loop_dst = dst[dst_idx];
+      Vector *loop_src = src[src_idx];
+
+      if (loop_dst != NULL && loop_dst->device != loop_src->device) {
+        // Copying between devices is not supported
+        continue;
+      }
+
+      loop_dst = copy_vector(loop_src, loop_dst);
+
+      // Fail conditions
+      bool correct_dst = (dst[dst_idx] != NULL && loop_dst == dst[dst_idx]) ||
+                         (dst[dst_idx] == NULL && loop_dst != NULL);
+      bool values_equals = vector_equals(loop_src, loop_dst);
+      if (!correct_dst || !values_equals) {
+        code = FAILED;
+        break;
+      }
+
+      // Clean-up temporary dst
+      if (dst[dst_idx] == NULL) {
+        destroy_vector(loop_dst);
+      }
+    }
+  }
+
+  // Clean-up
+  destroy_vector(a);
+  destroy_vector(cpu_dst);
+  destroy_vector(b);
+  destroy_vector(gpu_dst);
+
+  if (code == SUCCESS) {
     _TESTS_PASSED++;
   }
 
@@ -489,7 +545,8 @@ int main() {
                                            &test_matrix_move_cuda_cpu,
                                            &test_matrix_add_cuda,
                                            &test_matrix_sub_cuda,
-                                           &test_matrix_mult_cuda};
+                                           &test_matrix_mult_cuda,
+                                           &test_vector_copy};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -513,7 +570,8 @@ int main() {
                              "test_matrix_move_cuda_cpu",
                              "test_matrix_add_cuda",
                              "test_matrix_sub_cuda",
-                             "test_matrix_mult_cuda"};
+                             "test_matrix_mult_cuda",
+                             "test_vector_copy"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {
