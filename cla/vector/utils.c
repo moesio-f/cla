@@ -60,6 +60,9 @@ Vector *create_vector(int dims, CUDADevice *device, ...) {
 }
 
 void destroy_vector(Vector *vector) {
+  // Precondition
+  assert(vector != NULL);
+
   if (vector->device != NULL) {
     vector_to_cpu(vector);
   }
@@ -69,23 +72,23 @@ void destroy_vector(Vector *vector) {
 }
 
 Vector *copy_vector(Vector *a, Vector *dst) {
-  // Precondition
-  assert(vector_has_same_dims_same_devices(a, dst, a));
+  // Preconditions A
+  assert(a != NULL);
 
+  // Maybe allocate dst
   CUDADevice *device = a->device;
   dst = maybe_alloc_vector(dst, a->dims, device);
+
+  // Precondition V
+  assert(vector_has_same_dims_same_devices(a, dst, a));
 
   if (device != NULL) {
     vector_to_cpu(a);
     vector_to_cpu(dst);
   }
 
-  dst->dims = a->dims;
-  dst->device = a->device;
-  dst->arr = (double *)malloc(dst->dims * sizeof(double));
   for (int i = 0; i < dst->dims; i++) {
-    double *ptr = dst->arr + i;
-    *ptr = a->arr[i];
+    dst->arr[i] = a->arr[i];
   }
 
   if (device != NULL) {
@@ -97,6 +100,9 @@ Vector *copy_vector(Vector *a, Vector *dst) {
 }
 
 void print_vector(Vector *a, char *suffix) {
+  // Precondition
+  assert(a != NULL);
+
   CUDADevice *device = a->device;
   if (device != NULL) {
     vector_to_cpu(a);
@@ -119,6 +125,7 @@ void print_vector(Vector *a, char *suffix) {
 }
 
 bool vector_has_same_dims_same_devices(Vector *a, Vector *b, Vector *dst) {
+  assert(a != NULL && b != NULL && dst != NULL);
   return a->device == b->device && b->device == dst->device &&
          a->dims == b->dims && b->dims == dst->dims;
 }

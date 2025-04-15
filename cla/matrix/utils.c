@@ -45,6 +45,9 @@ Matrix *const_matrix(int rows, int columns, double value, CUDADevice *device) {
 }
 
 void destroy_matrix(Matrix *matrix) {
+  // Precondition
+  assert(matrix != NULL);
+
   if (matrix->device != NULL) {
     matrix_to_cpu(matrix);
   }
@@ -57,13 +60,17 @@ void destroy_matrix(Matrix *matrix) {
 }
 
 Matrix *copy_matrix(Matrix *a, Matrix *dst) {
-  // Precondition
-  assert(matrix_has_same_dims_same_devices(a, dst, a));
+  // Precondition A
+  assert(a != NULL);
 
+  // Maybe allocate dst
   CUDADevice *device = a->device;
   int rows = a->rows;
   int columns = a->columns;
   dst = maybe_alloc_matrix(dst, rows, columns, device);
+
+  // Precondition B
+  assert(matrix_has_same_dims_same_devices(a, dst, a));
 
   if (device != NULL) {
     matrix_to_cpu(a);
@@ -85,6 +92,9 @@ Matrix *copy_matrix(Matrix *a, Matrix *dst) {
 }
 
 void print_matrix(Matrix *a, char *suffix) {
+  // Precondition
+  assert(a != NULL);
+
   int i, j;
   CUDADevice *device = a->device;
   matrix_to_cpu(a);
@@ -107,6 +117,9 @@ void print_matrix(Matrix *a, char *suffix) {
 }
 
 Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
+  // Precondition
+  assert(a != NULL);
+
   int rows = 1, columns = a->dims;
   if (strategy == Vector2MatrixStrategy_COLUMN) {
     rows = a->dims;
@@ -140,16 +153,20 @@ Matrix *matrix_from_vector(Vector *a, Vector2MatrixStrategy strategy) {
 }
 
 bool matrix_has_same_dims_same_devices(Matrix *a, Matrix *b, Matrix *dst) {
+  assert(a != NULL && b != NULL && dst != NULL);
   return a->device == b->device && b->device == dst->device &&
          a->rows == b->rows && a->columns == b->columns &&
          b->rows == dst->rows && b->columns == dst->columns;
 }
 
 bool matrix_is_mult_compat(Matrix *a, Matrix *b, Matrix *dst) {
-  // Checking whether multiplication is possible
+  assert(a != NULL && b != NULL && dst != NULL);
   return a->device == b->device && b->device == dst->device &&
          a->columns == b->rows && dst->rows == a->rows &&
          dst->columns == b->columns;
 }
 
-bool matrix_is_square(Matrix *a) { return a->rows == a->columns; }
+bool matrix_is_square(Matrix *a) {
+  assert(a != NULL);
+  return a->rows == a->columns;
+}
