@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import logging
 from typing import Callable, Sequence
 
@@ -11,7 +12,29 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Vector:
+    """Class for representing vectors. Each vector represents
+    a collection of values in 1d grid with N dimensions.
+
+    Vectors can reside in a single device at a time (i.e., CPU or
+    a specific CUDA-capable GPU). This class allow multiple
+    operations in such vectors.
+
+    Vectors support slicing and indexing for both data access
+    and writing. Beware, only vectors on CPU support direct
+    memory access currently. Therefore, some care should be
+    taken with GPU vectors (i.e., bring it to CPU first).
+    """
+
     def __init__(self, data: Sequence[int | float] | int | float, _pointer=None):
+        """Constructor.
+
+        Args:
+            data (Sequence[int | float], int, float): data values to be
+                stored on the vector. All vectors are created on CPU.
+
+        Raises:
+            TypeError: if data is from an unsupported type.
+        """
         if isinstance(data, int) or isinstance(data, float):
             data = [data]
 
@@ -39,16 +62,51 @@ class Vector:
             self._pointer = _pointer
             self._contents = self._pointer.contents
 
+        # Set the default destination Vector
+        #   for operations that return a new Vector.
+        # This variable should only be used
+        #   by the DestinationVector context.
+        self._dst = None
+
     @property
     def device(self) -> CUDADevice | None:
+        """Current device (None if CPU, or
+        data about the GPU device).
+
+        Returns:
+            CUDADevice if GPU, None if CPU.
+        """
         dev = self._contents.device
         return self._devices[dev.contents.id] if dev else None
 
     @property
     def dims(self) -> int:
+        """Number of values in this
+        device (i.e., dimensionality).
+
+        Returns:
+            Number of dimensions (int).
+        """
         return self._contents.dims
 
     def to(self, device: CUDADevice | int | str | None) -> Vector:
+        """Send a vector to another computing device.
+
+        Args:
+            device (CUDADevice | int | str | None): device to
+                send this vector to. If None, sends back to CPU.
+                An integer argument selects the device with this
+                id, while string selects a device with the same
+                name.
+
+        Raises:
+            TypeError: if argument is not of correct type.
+            KeyError: if a device with the respective id/name
+                couldn't be find.
+
+        Returns:
+            The same Vector with in the newer device.
+        """
         if not isinstance(device, CUDADevice):
             if isinstance(device, int) or isinstance(device, str):
                 device = self._devices[device]
@@ -63,13 +121,28 @@ class Vector:
         self._pointer = CLA.vector_to_cu(
             self._pointer, self._devices._get_pointer(device)
         )
-        self._contents = self._pointer.contents
         return self
 
     def cpu(self) -> Vector:
+        """Brings a vector to CPU.
+
+        Returns:
+            The same Vector in the CPU.
+        """
         self._pointer = CLA.vector_to_cpu(self._pointer)
-        self._contents = self._pointer.contents
         return self
+
+    def release(self):
+        """Releases the underlying data for this
+        vector. Should only be called for advanced
+        usage (i.e., intensive computation). The
+        Python object still exists, therefore it
+        is recommend to use a `a.release()` followed
+        by `del a` to avoid any errors.
+        """
+        CLA.destroy_vector(self._pointer)
+        self._pointer = None
+        self._contents = None
 
     def __len__(self) -> int:
         return self.dims
@@ -161,7 +234,7 @@ class Vector:
         raise TypeError("Other should be vector or float.")
 
     def __add__(self, other: Vector | float | int) -> Vector:
-        return self.__add_generic(other)
+        return self.__add_generic(other, self._dst)
 
     def __radd__(self, other: Vector | float | int) -> Vector:
         return self + other
@@ -182,7 +255,7 @@ class Vector:
         raise TypeError("Other should be vector or float.")
 
     def __sub__(self, other: Vector | float | int) -> Vector:
-        return self.__sub_generic(other)
+        return self.__sub_generic(other, self._dst)
 
     def __rsub__(self, other: Vector | float | int) -> Vector:
         return -self + other
@@ -206,7 +279,7 @@ class Vector:
         raise TypeError("Other should be vector or float.")
 
     def __mul__(self, other: Vector | float | int) -> Vector:
-        return self.__mul_generic(other)
+        return self.__mul_generic(other, self._dst)
 
     def __rmul__(self, other: Vector | float | int):
         return self * other
@@ -252,7 +325,7 @@ class Vector:
         raise TypeError("Other should be vector or float.")
 
     def __truediv__(self, other: Vector | float | int, dst: Vector = None) -> Vector:
-        return self.__truediv_generic(other)
+        return self.__truediv_generic(other, self._dst)
 
     def __rtruedive__(self, other: Vector | float | int) -> Vector:
         raise NotImplementedError("Currently not supported.")
@@ -261,8 +334,6 @@ class Vector:
         return self.__truediv_generic(other, self)
 
     def __pow_generic(self, other: int, dst: Vector = None) -> Vector:
-        raise NotImplementedError("Currently not supported.")
-
         if not isinstance(other, int):
             raise TypeError("Other should be integer.")
 
@@ -284,20 +355,37 @@ class Vector:
         return dst
 
     def __pow__(self, other: int) -> Vector:
-        return self.__pow_generic(other)
+        return self.__pow_generic(other, self._dst)
 
     def __ipow__(self, other: int) -> Vector:
         return self.__pow_generic(other, self)
 
+    def __eq__(self, other: Vector) -> bool:
+        if (
+            not isinstance(other, Vector)
+            or self.dims != other.dims
+            or self.device != other.device
+        ):
+            return False
+
+        if self._pointer == other._pointer:
+            return True
+
+        return CLA.vector_equals(self._pointer, other._pointer)
+
     def __str__(self) -> str:
-        data = "<gpu>" if self.device else ", ".join(map(str, self))
+        if self.device:
+            data = "<gpu>"
+        else:
+            data = ", ".join(map(str, self[:10])) + ", ..."
         device = self.device.short_str() if self.device else "CPU"
         return f"Vector([{data}], dims={self.dims}, device={device})"
 
+    def __repr__(self) -> str:
+        return str(self)
+
     def __dell__(self):
-        CLA.destroy_vector(self._pointer)
-        self._pointer = None
-        self._contents = None
+        release()
 
     def _maybe_handle_different_devices(
         self,
@@ -332,6 +420,28 @@ class Vector:
     def _sanitize_slice(self, key: slice) -> slice:
         return slice(*key.indices(len(self)))
 
+    def _set_dst(self, dst: Vector):
+        self._dst = dst
+
+    def _clear_dst(self):
+        self._dst = None
+
+    @staticmethod
+    def has_shared_data(a: Vector, b: Vector):
+        """Returns whether two vectors share the
+        same underlying data (i.e., changes on one
+        vector's data is reflected into the other).
+
+        Args:
+            a (Vector): first vector.
+            b (Vector): second vector.
+
+        Returns:
+            True if vectors share data, False
+                otherwise.
+        """
+        return a._pointer == b._pointer
+
     @staticmethod
     def _log_warning_different_devices(a: CUDADevice, b: CUDADevice, dst: CUDADevice):
         def _str(dev: CUDADevice) -> str:
@@ -348,3 +458,60 @@ class Vector:
     @staticmethod
     def _log_warning_copying_to_cpu(a: CUDADevice):
         LOGGER.warning("Vector is on %s, temporarily copying to CPU.", a.short_str())
+
+
+class ShareDestionationVector(contextlib.AbstractContextManager):
+    """Context manager to avoid allocating new vectors
+    for each operation. Should be used for intensive
+    computation that respects the device (i.e., are made
+    on the same computational device) and dimensions of
+    the target vector.
+    """
+
+    def __init__(self, *src: Vector):
+        """Context constructor.
+
+        Args:
+            *src (Vector): vectors whose operations
+                should store results in the same
+                destination.
+        """
+        self._src = src
+        first = self._src[0]
+
+        # Assert compatible vectors
+        assert all(
+            map(
+                lambda v: (v.device == first.device) and (v.dims == first.dims),
+                self._src[1:],
+            )
+        )
+
+        # Initialize destination Vector with same
+        #   dims and device as src[0]
+        self._dst = Vector([0.0] * first.dims)
+        self._dst = self._dst.to(first.device)
+
+        # The destination vector has itself as
+        #   destination for any operation with
+        #   it
+        self._dst._set_dst(self._dst)
+
+        # Obtain any set dst Vector
+        self._initial_dst = list(map(lambda v: v._dst, self._src))
+
+    def __enter__(self) -> Vector:
+        # Set all src with dst
+        for v in self._src:
+            v._set_dst(self._dst)
+
+        return self._dst
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Unset the src and maybe reset the original
+        #   source (i.e., nested context)
+        for i, v in enumerate(self._src):
+            v._clear_dst()
+            dst = self._initial_dst[i]
+            if dst:
+                v._set_dst(dst)
