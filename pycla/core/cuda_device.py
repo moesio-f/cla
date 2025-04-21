@@ -50,8 +50,16 @@ class Devices:
                 )
             )
 
-    def __len__(self) -> int:
+    @property
+    def count(self) -> int:
         return len(self._devices)
+
+    @property
+    def has_cuda(self) -> bool:
+        return self.count > 0
+
+    def __len__(self) -> int:
+        return self.count
 
     def __getitem__(self, key: int | str) -> CUDADevice:
         is_int = isinstance(key, int)
@@ -72,6 +80,9 @@ class Devices:
 
     def __str__(self) -> str:
         return f"[{','.join(self._devices)}]"
+
+    def __repr__(self) -> str:
+        return str(self)
 
     def _get_pointer(self, device: int | str | CUDADevice) -> POINTER(_CUDADevice):
         if isinstance(device, int) or isinstance(device, str):
