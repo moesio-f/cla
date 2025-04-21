@@ -1,6 +1,6 @@
+from ctypes import POINTER
 from dataclasses import dataclass
 
-from ctypes import POINTER
 from pycla.bin.cla import CLA, _CUDADevice
 
 
