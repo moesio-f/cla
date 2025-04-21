@@ -5,7 +5,8 @@ from pathlib import Path
 _TYPE_MAPPER = {
     "Vector": "_Vector",
     "Matrix": "_Matrix",
-    "double": "float",
+    "double": "c_double",
+    "bool": "c_bool",
     "CUDADevice": "_CUDADevice",
 }
 
@@ -52,7 +53,7 @@ def main(header_file: Path, output_file: Path):
             fun_args[i] = (arg_type, arg_name, is_arg_pointer)
 
         # Prepare return_type
-        has_return = (return_type != "void")
+        has_return = return_type != "void"
         return_type = _TYPE_MAPPER.get(return_type, return_type)
         return_type = f"POINTER({return_type})" if is_return_pointer else return_type
 

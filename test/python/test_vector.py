@@ -195,7 +195,8 @@ def test_dot_product(a: float, b: float, dims: int):
     expected = dims * a * b
 
     # Apply operation
-    assert (vec_a @ vec_b) == expected
+    result = vec_a @ vec_b
+    assert round(result, 1) == round(expected, 1)
 
     # Release
     vec_a.release()

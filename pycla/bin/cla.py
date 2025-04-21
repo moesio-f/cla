@@ -212,22 +212,22 @@ class _CLA:
         self._lib.vector_mult_scalar.restype = POINTER(_Vector)
         self._lib.vector_projection.restype = POINTER(_Vector)
         self._lib.vector_element_wise_prod.restype = POINTER(_Vector)
-        self._lib.vector_dot_product.restype = float
-        self._lib.vector_lp_norm.restype = float
-        self._lib.vector_max_norm.restype = float
-        self._lib.vector_l2_norm.restype = float
-        self._lib.vector_angle_between_rad.restype = float
-        self._lib.vector_equals.restype = bool
-        self._lib.vector_orthogonal.restype = bool
-        self._lib.vector_orthonormal.restype = bool
+        self._lib.vector_dot_product.restype = c_double
+        self._lib.vector_lp_norm.restype = c_double
+        self._lib.vector_max_norm.restype = c_double
+        self._lib.vector_l2_norm.restype = c_double
+        self._lib.vector_angle_between_rad.restype = c_double
+        self._lib.vector_equals.restype = c_bool
+        self._lib.vector_orthogonal.restype = c_bool
+        self._lib.vector_orthonormal.restype = c_bool
         self._lib.matrix_add.restype = POINTER(_Matrix)
         self._lib.matrix_sub.restype = POINTER(_Matrix)
         self._lib.matrix_mult.restype = POINTER(_Matrix)
         self._lib.matrix_mult_scalar.restype = POINTER(_Matrix)
-        self._lib.matrix_trace.restype = float
-        self._lib.matrix_lpq_norm.restype = float
-        self._lib.matrix_frobenius_norm.restype = float
-        self._lib.matrix_equals.restype = bool
+        self._lib.matrix_trace.restype = c_double
+        self._lib.matrix_lpq_norm.restype = c_double
+        self._lib.matrix_frobenius_norm.restype = c_double
+        self._lib.matrix_equals.restype = c_bool
 
     def __del__(self):
         self._lib.clear_devices()
