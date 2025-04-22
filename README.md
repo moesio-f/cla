@@ -31,6 +31,9 @@ CLA is a simple toy library for basic vector/matrix operations in C. This projec
 
 # Quick Start
 
+> [!IMPORTANT]  
+> In order to use the library the [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) must be installed and available in the system. Even if you don't intend to use a GPU, the library uses the CUDA Runtime to query for CUDA-capable devices and will fail if the `cudart` is unavailable.
+
 ## Installation
 
 For the C-only API, obtain the latest binaries and headers from the [releases](https://github.com/moesio-f/cla/releases) tab in GitHub. For the Python API, use your favorite package manager (i.e., `pip`, `uv`) and install `pycla` from PyPi (e.g., `pip install pycla`).
