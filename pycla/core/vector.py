@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import math
 from typing import Callable, Sequence
 
 from pycla.bin.cla import CLA, _Vector
@@ -386,6 +387,110 @@ class Vector:
 
     def __dell__(self):
         release()
+
+    def l2(self) -> float:
+        """L2 norm.
+
+        Returns:
+            float: l2 norm.
+        """
+        return CLA.vector_l2_norm(self._pointer)
+
+    def lp(self, p: float) -> float:
+        """LP norm.
+
+        Args:
+            p (float): p-value for LP norm.
+
+        Returns:
+            float: lp norm.
+        """
+        return CLA.vector_lp_norm(self._pointer, p)
+
+    def max(self) -> float:
+        """Return the max value in
+        this vector (max-norm).
+
+        Returns:
+            float: max norm.
+        """
+        return CLA.vector_max_norm(self._pointer)
+
+    def projection(self, other: Vector) -> Vector:
+        """Vector projection of self onto other.
+
+        Args:
+            other (Vector): vector for self to be
+                projected to.
+
+        Raises:
+            TypeError: if other is not Vector.
+
+        Returns:
+            Vector: projection of self onto other.
+        """
+        if not isinstance(other, Vector):
+            raise TypeError("Projection only supports other vector.")
+
+        return self._maybe_handle_different_devices(
+            other, CLA.vector_projection, self._dst
+        )
+
+    def angle_to(self, other: Vector, unit: "rad" | "deg" = "rad") -> float:
+        """Returns the angle between the self and other vector.
+
+        Args:
+            other (Vector): other vector.
+            unit ("rad" or "deg"): whether angle should be in
+                radians or degrees.
+
+        Returns:
+            float: angle between vectors in radians/degrees.
+        """
+        # Obtain common device if any
+        self_dev = self.device
+        other_dev = other.device
+
+        # Bring values to same device
+        if self_dev != other_dev:
+            common_dev = self_dev if self_dev is not None else other_dev
+            self._log_warning_different_devices(self_dev, other_dev, common_dev)
+            self.to(common_dev)
+            other.to(common_dev)
+
+        # Get radians angle
+        rad = CLA.vector_angle_between_rad(self._pointer, other._pointer)
+
+        # Send back to correct devices
+        self.to(self_dev)
+        other.to(other_dev)
+
+        # Return angle
+        return rad if unit == "rad" else rad * 180.0 / math.pi
+
+    def is_orthogonal(self, other: Vector) -> bool:
+        """Whether two vectors are orthogonal (i.e.,
+        90deg angle) w.r.t to the other.
+
+        Args:
+            other (Vector): other vector.
+
+        Returns:
+            bool: True if orthogonal, False otherwise.
+        """
+        return CLA.vector_orthogonal(self._pointer, other._pointer)
+
+    def is_orthonormal(self, other: Vector) -> bool:
+        """Whether two vectors are orthonormal (i.e.,
+        90deg angle and unit vectors) w.r.t to the other.
+
+        Args:
+            other (Vector): other vector.
+
+        Returns:
+            bool: True if orthonormal, False otherwise.
+        """
+        return CLA.vector_orthonormal(self._pointer, other._pointer)
 
     def _maybe_handle_different_devices(
         self,
