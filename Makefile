@@ -23,12 +23,14 @@ all: prepare-cla compile-cla copy-cla-bin-pycla
 test: all test-cla test-pycla
 
 # Create release
-release: test pack-release-cla
+release: test pack-release-cla pack-release-pycla
 
 # Clean any build files
 clean:
 	@echo "[Makefile] Clean project files..."
-	@rm -rf ${CLA_BUILD_PATH} ${CLA_BUILD_WIN_PATH} ${PYCLA_DIST}
+	@rm -rf $(CLA_BUILD_PATH) $(CLA_BUILD_WIN_PATH) $(PYCLA_DIST)
+	@rm -rf $(PYCLA_DIST)
+	@rm $(PYCLA_CLA_BIN)/libcla.so*
 
 # Generate cla project files with Ninja
 prepare-cla:
@@ -55,7 +57,7 @@ test-cla-memory-stability:
 
 # Pack into release
 pack-release-cla:
-	@echo "[Makefile] Creating release..."
+	@echo "[Makefile] Creating release for CLA..."
 	@echo "[Makefile] Parsing release version for CLA..."
 	@awk '/project\(cla/,/CUDA C\)/' $(CLA_SRC_PATH)/CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' > make_cla_version
 	@echo "[Makefile] Packing Linux cla build..."
@@ -67,6 +69,10 @@ pack-release-cla:
 	@echo "[Makefile] Cleaning up..."
 	@rm make_cla_version
 
+pack-release-pycla:
+	@echo "[Makefile] Creating release for pycla..."
+	@python -m build -w -o $(PYCLA_DIST) 
+
 # Copy named library to pycla
 copy-cla-bin-pycla:
 	@echo "[Makefile] Copying CLA shared library to pycla..."
@@ -75,4 +81,4 @@ copy-cla-bin-pycla:
 # Test pycla
 test-pycla:
 	@echo "[Makefile] Testing pycla..."
-	@pytest -x $(PYCLA_TEST_DIR)
+	@pytest -x $(PYCLA_TEST_DIR) 
