@@ -369,7 +369,7 @@ class Vector:
         ):
             return False
 
-        if self._pointer == other._pointer:
+        if self.has_shared_data(self, other):
             return True
 
         return CLA.vector_equals(self._pointer, other._pointer)
@@ -378,7 +378,7 @@ class Vector:
         if self.device:
             data = "<gpu>"
         else:
-            data = ", ".join(map(str, self[:10])) + ", ..."
+            data = ", ".join(map(str, self[:10])) + (", ..." if len(self) > 10 else "")
         device = self.device.short_str() if self.device else "CPU"
         return f"Vector([{data}], dims={self.dims}, device={device})"
 
@@ -545,7 +545,7 @@ class Vector:
             True if vectors share data, False
                 otherwise.
         """
-        return a._pointer == b._pointer
+        return CLA.points_to_same_location(a._pointer, b._pointer)
 
     @staticmethod
     def _log_warning_different_devices(a: CUDADevice, b: CUDADevice, dst: CUDADevice):

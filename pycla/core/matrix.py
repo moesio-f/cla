@@ -408,7 +408,7 @@ class Matrix:
         ):
             return False
 
-        if self._pointer == other._pointer:
+        if self.has_shared_data(self, other):
             return True
 
         return CLA.matrix_equals(self._pointer, other._pointer)
@@ -517,10 +517,10 @@ class Matrix:
             b (Matrix): second matrix.
 
         Returns:
-            True if matrixs share data, False
+            True if matrixces share data, False
                 otherwise.
         """
-        return a._pointer == b._pointer
+        return CLA.points_to_same_location(a._pointer, b._pointer)
 
     @staticmethod
     def _log_warning_different_devices(a: CUDADevice, b: CUDADevice, dst: CUDADevice):
@@ -562,7 +562,9 @@ class ShareDestionationMatrix(contextlib.AbstractContextManager):
         # Assert compatible matrices
         assert all(
             map(
-                lambda v: (v.device == first.device) and (v.dims == first.dims),
+                lambda v: (v.device == first.device)
+                and (v.rows == first.rows)
+                and (v.columns == first.columns),
                 self._src[1:],
             )
         )

@@ -10,6 +10,7 @@ CLA_VALGRIND_SUPP := valgrind_cudart.supp
 
 # Variable Python API
 PYCLA_DIST := dist
+PYCLA_TEST_DIR := test/python
 
 # Utility variables
 CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
@@ -18,7 +19,7 @@ CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
 all: prepare-cla compile-cla
 
 # Create new target and run tests
-test: all test-cla
+test: all test-cla test-pycla
 
 # Create release
 release: test pack-release-cla
@@ -65,3 +66,8 @@ pack-release-cla:
 	@echo "[Makefile] Cleaning up..."
 	@rm make_cla_version
 
+
+# Test pycla
+test-pycla:
+	@echo "[Makefile] Testing pycla..."
+	@pytest -x $(PYCLA_TEST_DIR)

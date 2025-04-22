@@ -232,5 +232,11 @@ class _CLA:
     def __del__(self):
         self._lib.clear_devices()
 
+    @staticmethod
+    def points_to_same_location(a: POINTER, b: POINTER) -> bool:
+        a_ = cast(a, c_void_p).value
+        b_ = cast(b, c_void_p).value
+        return a_ == b_
+
 
 CLA = _CLA()
