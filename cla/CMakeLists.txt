@@ -4,7 +4,9 @@ cmake_minimum_required(VERSION 3.20)
 # Setting project name, version and language
 project(cla
         VERSION 0.2.1
-        LANGUAGES CUDA C)
+        LANGUAGES CUDA C
+        
+    )
 
 # Find CUDAToolkit
 find_package(CUDAToolkit REQUIRED)
@@ -19,6 +21,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wno-deprecated-gpu-targets")
 # Add library cla
 add_library(${CMAKE_PROJECT_NAME} SHARED)
 set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY C_STANDARD 17)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 # Add all subdirectories that compose this library
 add_subdirectory(include)

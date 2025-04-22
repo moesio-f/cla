@@ -11,12 +11,13 @@ CLA_VALGRIND_SUPP := valgrind_cudart.supp
 # Variable Python API
 PYCLA_DIST := dist
 PYCLA_TEST_DIR := test/python
+PYCLA_CLA_BIN := pycla/bin
 
 # Utility variables
 CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
 
-# Run all steps to build cla and pycla (TODO)
-all: prepare-cla compile-cla
+# Run all steps to build cla and pycla
+all: prepare-cla compile-cla copy-cla-bin-pycla 
 
 # Create new target and run tests
 test: all test-cla test-pycla
@@ -59,13 +60,17 @@ pack-release-cla:
 	@awk '/project\(cla/,/CUDA C\)/' $(CLA_SRC_PATH)/CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' > make_cla_version
 	@echo "[Makefile] Packing Linux cla build..."
 	@rm -f cla-linux-`cat make_cla_version`.zip
-	@cp $(CLA_BUILD_PATH)/libcla.so .
-	@zip cla-linux-`cat make_cla_version`.zip $(CLA_SRC_PATH)/include/*.h libcla.so
-	@rm libcla.so
+	@cp $(CLA_BUILD_PATH)/libcla.so* .
+	@zip cla-linux-`cat make_cla_version`.zip $(CLA_SRC_PATH)/include/*.h libcla.so*
+	@rm libcla.so*
 	@echo "[Makefile] Packed Linux cla build."
 	@echo "[Makefile] Cleaning up..."
 	@rm make_cla_version
 
+# Copy named library to pycla
+copy-cla-bin-pycla:
+	@echo "[Makefile] Copying CLA shared library to pycla..."
+	@cp $(CLA_BUILD_PATH)/libcla.so* $(PYCLA_CLA_BIN)
 
 # Test pycla
 test-pycla:

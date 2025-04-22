@@ -41,8 +41,16 @@ _Matrix._fields_ = [
 ]
 
 
+def _get_latest_binary(
+    root: resources.abc.Traversable, lib_name: str
+) -> resources.abc.Traversable:
+    files = [p for p in root.iterdir() if p.is_file() and p.name.startswith(lib_name)]
+    return sorted(files, reverse=True)[0]
+
+
 class _CLA:
-    LIBCLA_PATH: Path = resources.files("pycla.bin").joinpath("libcla.so")
+    LIB_NAME: str = "libcla.so"
+    LIBCLA_PATH: Path = _get_latest_binary(resources.files("pycla.bin"), LIB_NAME)
 
     def __init__(self):
         # Initialize library
@@ -53,6 +61,12 @@ class _CLA:
 
         # Populate CUDA devices
         self._lib.populate_devices()
+
+    @property
+    def version(self) -> str:
+        version = self.LIBCLA_PATH.name.replace(self.LIB_NAME + ".", "")
+        version = f"v{version if version else '0.0.0'}"
+        return version
 
     @property
     def cuda_device_count(self) -> int:
