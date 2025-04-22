@@ -24,5 +24,3 @@ repository = "https://github.com/moesio-f/cla"
 [tool.setuptools]
 packages = ["pycla"]
 
-[tool.distutils.bdist_wheel]
-plat-name = "linux_x86_64"
