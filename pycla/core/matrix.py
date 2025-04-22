@@ -292,7 +292,7 @@ class Matrix:
                 f"Cannot iterate over matrix in GPU (device={self.device.short_str()})"
             )
 
-        for i in range(len(self)):
+        for i in range(self.rows):
             yield self[i, :]
 
     def __contains__(self, value: float | int) -> bool:
