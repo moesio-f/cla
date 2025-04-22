@@ -45,7 +45,65 @@ To run, make the `libcla.so` findable by the executable (i.e., either update `LD
 
 ## Python API
 
-The Python API provides an object-oriented approach for using the low-level C API. All features of the C API are exposed by the [`Vector`](pycla/core/vector.py) and [`Matrix`](pycla/core/matrix.py) classes. Some samples are available at [`samples`](samples) using Jupyter Notebooks. 
+The Python API provides an object-oriented approach for using the low-level C API. All features of the C API are exposed by the [`Vector`](pycla/core/vector.py) and [`Matrix`](pycla/core/matrix.py) classes. Some samples are available at [`samples`](samples) using Jupyter Notebooks. The code below showcases the basic features of the API:
+
+```python
+# Core entities
+from pycla import Vector, Matrix
+
+# Contexts for intensive computation
+from pycla.core import ShareDestionationVector, ShareDestionationMatrix
+
+# Vector and Matrices can be instantiated directly from Python lists/sequences
+vector = Vector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+# e.g, for Matrices
+# matrix = Matrix([[1, 2, 3, 4], [1, 2, 3, 4]])
+
+# Vector and Matrices can be moved forth and back to the GPU with the `.to(...)` and `.cpu()` methods
+# Once an object is on the GPU, we cannot directly read its data from the CPU,
+#    however we can still retrieve its metadata (i.e., shape, device name, etc)
+vector.to(0)
+print(vector)
+
+# We can bring an object back to the CPU with either
+#   .to(None) or .cpu() calls
+vector.cpu()
+print(vector)
+
+# The Vector class overrides the built-in operators
+#  of Python. Most of the time, the result of an operation
+#  return a new Vector instead of updating the current one
+#  in place.
+result = vector ** 2
+print(result)
+
+# We can also directly release the memory allocated
+#  for a vector with
+vector.release()
+del vector
+
+# Whenever we apply an operation on a Vector/Matrix,
+#   a new object is allocated in memory to store the result.
+# The only exception are the 'i' operations (i.e., *=, +=, -=, etc),
+#   which edit the object in place.
+# However, for some extensive computation, it is desirable to
+#   waste as little memory and time as possible. Thus, the
+#   ShareDestination{Vector,Matrix} contexts allow for using
+#   a single shared object for most operation with vectors and matrices.
+a = Vector([1.0] * 10)
+b = Vector([2.0] * 10)
+with ShareDestionationVector(a, b) as result:
+    op1 = a + b
+    op2 = result * 2
+    op3 = result / 2
+
+# All op1, op2 and op3 vectors represent the
+#  same vector.
+print(result)
+print(Vector.has_shared_data(op1, result))
+print(Vector.has_shared_data(op2, result))
+print(Vector.has_shared_data(op3, result))
+```
 
 # Build
 
