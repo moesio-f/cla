@@ -11,23 +11,26 @@ CLA_VALGRIND_SUPP := valgrind_cudart.supp
 # Variable Python API
 PYCLA_DIST := dist
 PYCLA_TEST_DIR := test/python
+PYCLA_CLA_BIN := pycla/bin
 
 # Utility variables
 CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
 
-# Run all steps to build cla and pycla (TODO)
-all: prepare-cla compile-cla
+# Run all steps to build cla and pycla
+all: prepare-cla compile-cla copy-cla-bin-pycla 
 
 # Create new target and run tests
 test: all test-cla test-pycla
 
 # Create release
-release: test pack-release-cla
+release: test pack-release-cla pack-release-pycla
 
 # Clean any build files
 clean:
 	@echo "[Makefile] Clean project files..."
-	@rm -rf ${CLA_BUILD_PATH} ${CLA_BUILD_WIN_PATH} ${PYCLA_DIST}
+	@rm -rf $(CLA_BUILD_PATH) $(CLA_BUILD_WIN_PATH) $(PYCLA_DIST)
+	@rm -rf $(PYCLA_DIST)
+	@rm -f $(PYCLA_CLA_BIN)/libcla.so*
 
 # Generate cla project files with Ninja
 prepare-cla:
@@ -54,20 +57,33 @@ test-cla-memory-stability:
 
 # Pack into release
 pack-release-cla:
-	@echo "[Makefile] Creating release..."
+	@echo "[Makefile] Creating release for CLA..."
 	@echo "[Makefile] Parsing release version for CLA..."
 	@awk '/project\(cla/,/CUDA C\)/' $(CLA_SRC_PATH)/CMakeLists.txt | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)*' > make_cla_version
 	@echo "[Makefile] Packing Linux cla build..."
 	@rm -f cla-linux-`cat make_cla_version`.zip
-	@cp $(CLA_BUILD_PATH)/libcla.so .
-	@zip cla-linux-`cat make_cla_version`.zip $(CLA_SRC_PATH)/include/*.h libcla.so
-	@rm libcla.so
+	@cp $(CLA_BUILD_PATH)/libcla.so* .
+	@zip cla-linux-`cat make_cla_version`.zip $(CLA_SRC_PATH)/include/*.h libcla.so*
+	@rm libcla.so*
 	@echo "[Makefile] Packed Linux cla build."
 	@echo "[Makefile] Cleaning up..."
 	@rm make_cla_version
 
+pack-release-pycla:
+	@echo "[Makefile] Creating release for pycla..."
+	@python -m build -w -o $(PYCLA_DIST) 
+
+# Copy named library to pycla
+copy-cla-bin-pycla:
+	@echo "[Makefile] Copying CLA shared library to pycla..."
+	@cp $(CLA_BUILD_PATH)/libcla.so* $(PYCLA_CLA_BIN)
 
 # Test pycla
 test-pycla:
 	@echo "[Makefile] Testing pycla..."
-	@pytest -x $(PYCLA_TEST_DIR)
+	@pytest -x $(PYCLA_TEST_DIR) 
+
+# Publish pycla
+publish-pycla:
+	@echo "[Makefile] Publish pycla to PyPI..."
+	@twine upload $(PYCLA_DIST)/*

@@ -14,28 +14,52 @@ typedef struct {
   dim3 n_blocks;
 } KernelLaunchParams;
 
+int _find_n(int dims, int n, int coef) {
+  // Simple algorithm to find an appropriate
+  //  number of blocks/threads for the problem.
+  // See https://github.com/moesio-f/cla/issues/11 for
+  //    a discussion on this method.
+  // Find k
+  int k = 1 + (int)ceil(pow(dims, 1 / n) / coef);
+
+  // Find n
+  return coef * k;
+}
+
 KernelLaunchParams get_vector_launch_parametes(CUDADevice *device,
                                                int vec_dims) {
-  // Simple algorithm to find an appropriate
-  //  number of blocks/threads based on device.
   int max_threads = device->max_threads_per_block;
-  int n_threads = max_threads > vec_dims ? vec_dims : max_threads;
-  int n_blocks = 1 + (int)ceil((vec_dims - n_threads) / n_threads);
+  int max_grid = device->max_grid_size_x;
+  int n = _find_n(vec_dims, 2, 16);
 
-  return {dim3(n_threads), dim3(n_blocks)};
+  // Assert we have enough threads/blocks to compute
+  //    and that those values fit the device capabilities
+  assert(n * n >= vec_dims);
+  assert(n <= max_threads);
+  assert(n <= max_grid);
+
+  return {dim3(n), dim3(n)};
 }
 
 KernelLaunchParams get_maitrx_launch_parametes(CUDADevice *device, int mat_rows,
                                                int mat_columns) {
-  // Simple algorithm to find an appropriate
-  //  number of blocks/threads based on device.
   int max_threads = device->max_threads_per_block;
+  int max_grid_x = device->max_grid_size_x;
+  int max_grid_y = device->max_grid_size_y;
   int max_threads_dim = (int)floor(sqrt(max_threads));
-  dim3 n_threads(max_threads_dim > mat_rows ? mat_rows : max_threads_dim,
-                 max_threads_dim > mat_columns ? mat_columns : max_threads_dim);
-  dim3 n_blocks(1 + (int)ceil((mat_rows - n_threads.x) / n_threads.x),
-                1 + (int)ceil((mat_columns - n_threads.y) / n_threads.y));
-  return {n_threads, n_blocks};
+  int n_x = _find_n(mat_rows, 2, 16);
+  int n_y = _find_n(mat_columns, 2, 16);
+
+  // Assert we have enough threads/blocks to compute
+  //    and that those values fit the device capabilities
+  assert(n_x * n_x >= mat_rows);
+  assert(n_y * n_y >= mat_columns);
+  assert(n_x <= max_threads_dim);
+  assert(n_y <= max_threads_dim);
+  assert(n_x <= max_grid_x);
+  assert(n_y <= max_grid_y);
+
+  return {dim3(n_x, n_y), dim3(n_x, n_y)};
 }
 
 extern "C" Vector *cpu_gpu_conditional_apply_vector_operator(

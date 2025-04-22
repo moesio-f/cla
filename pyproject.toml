@@ -4,17 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pycla"
-version = "0.0.0"
+version = "1.0.0"
 readme = "README.md"
-description = "CLA is a simple toy library for basic vector/matrix operations written C with a Python API."
-
+description = "CLA is a simple toy library for basic vector/matrix operations written C + CUDA with a Python API."
 requires-python = ">=3.13"
-
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: GPU :: NVIDIA CUDA :: 12",
+    "Operating System :: POSIX :: Linux",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: C",
 ]
+keywords = [ "linear algebra", "vector", "matrix", "c", "ctypes", "cuda", "gpu" ]
 
 [project.urls]
 repository = "https://github.com/moesio-f/cla"
@@ -22,3 +24,5 @@ repository = "https://github.com/moesio-f/cla"
 [tool.setuptools]
 packages = ["pycla"]
 
+[tool.distutils.bdist_wheel]
+plat-name = "linux_x86_64"
