@@ -417,6 +417,35 @@ class Matrix:
     def __dell__(self):
         release()
 
+    def frobenius(self) -> float:
+        """Frobenius norm.
+
+        Returns:
+            float: frobenius norm.
+        """
+        return CLA.matrix_frobenius_norm(self._pointer)
+
+    def lpq(self, p: float, q: float) -> float:
+        """LPQ norm.
+
+        Args:
+            p (float): p-value for LPQ norm.
+            q (float): q-value for LPQ norm.
+
+        Returns:
+            float: lpq norm.
+        """
+        return CLA.matrix_lpq_norm(self._pointer, p, q)
+
+    def trace(self) -> float:
+        """Return the trace of this
+        matrix.
+
+        Returns:
+            float: trace.
+        """
+        return CLA.matrix_trace(self._pointer)
+
     def _maybe_handle_different_devices(
         self,
         other: Matrix,
