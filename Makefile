@@ -30,7 +30,7 @@ clean:
 	@echo "[Makefile] Clean project files..."
 	@rm -rf $(CLA_BUILD_PATH) $(CLA_BUILD_WIN_PATH) $(PYCLA_DIST)
 	@rm -rf $(PYCLA_DIST)
-	@rm $(PYCLA_CLA_BIN)/libcla.so*
+	@rm -f $(PYCLA_CLA_BIN)/libcla.so*
 
 # Generate cla project files with Ninja
 prepare-cla:
@@ -82,3 +82,8 @@ copy-cla-bin-pycla:
 test-pycla:
 	@echo "[Makefile] Testing pycla..."
 	@pytest -x $(PYCLA_TEST_DIR) 
+
+# Publish pycla
+publish-pycla:
+	@echo "[Makefile] Publish pycla to PyPI..."
+	@twine upload $(PYCLA_DIST)/*
