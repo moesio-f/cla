@@ -195,10 +195,25 @@ class Matrix:
             self.cpu()
 
         # Fetch data
-        data = [
-            [row[column]] if is_column_int else row[column]
-            for row in self._contents.arr[row]
-        ]
+        if is_row_slice:
+            # Initialize empty data and fetch rows
+            data = []
+            data_rows = self._contents.arr[row]
+
+            # For each row, query the actual column
+            for dr in data_rows:
+                # Fetch column data
+                dc = dr[column]
+
+                # If it is a single element,
+                #   wrap into a list
+                if is_column_int:
+                    dc = [dc]
+
+                # Store data
+                data.append(dc)
+        else:
+            data = self._contents.arr[row][column]
 
         if dev:
             self.to(dev)
