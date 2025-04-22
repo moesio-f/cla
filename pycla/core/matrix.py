@@ -245,21 +245,61 @@ class Matrix:
 
         value_error = (
             (is_row_int and is_column_int and not is_value_float)
-            or (is_row_slice and is_column_slice and not is_value_list)
+            or (is_row_int and is_column_slice and not is_value_list)
+            or (is_row_slice and is_column_int and not is_value_list_list)
             or (is_row_slice and is_column_slice and not is_value_list_list)
         )
         if value_error:
             raise ValueError("Key and values are of incompatible type.")
+
+        # Sanitize slices
+        row = self._maybe_sanitize_if_slice(row, is_row=True)
+        column = self._maybe_sanitize_if_slice(column, is_row=False)
+
+        def _slice_length(s: slice):
+            return 1 + (s.stop - 1 - s.start) // s.step
+
+        # If key is (int, slice), we should have a single row and the appropriate
+        #   number of columns.
+        if is_row_int and is_column_slice:
+            n_columns_value = _slice_length(column)
+            if n_columns_value != len(value):
+                raise ValueError(
+                    "Invalid value for (int, slice) key. "
+                    f"Should be list with {n_columns_value} values."
+                )
+
+        # If key is (slice, int), we should have multiple rows with one
+        #   list of a single element
+        if is_row_slice and is_column_int:
+            n_rows_value = _slice_length(row)
+            if n_rows_value != len(value) or any(
+                not isinstance(v, list) or len(v) != 1 for v in value
+            ):
+                raise ValueError(
+                    "Invalid value for (slice, int) key. "
+                    f"Should be {n_rows_value} lists with 1 value each."
+                )
+
+        # If key is (slice, slice), we should have multiple rows
+        #   with multiple columns
+        if is_row_slice and is_column_slice:
+            n_rows_value = _slice_length(row)
+            n_columns_value = _slice_length(column)
+            if n_rows_value != len(value) or any(
+                not isinstance(v, list) or len(v) != n_columns_value for v in value
+            ):
+                raise ValueError(
+                    "Invalid value for (slice, int) key. "
+                    f"Should be {n_rows_value} lists with "
+                    f"{n_columns_value} value each."
+                )
 
         # Prepare for operation
         dev = self.device
         if dev:
             self._log_warning_copying_to_cpu(dev)
             self.cpu()
-
-        # Sanitize slices
-        row = self._maybe_sanitize_if_slice(row, is_row=True)
-        column = self._maybe_sanitize_if_slice(column, is_row=False)
 
         # Set values
         for row_idx in range(row.start, row.stop, row.step) if is_row_slice else [row]:
