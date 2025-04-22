@@ -3,6 +3,7 @@ Tests for the Vector
 class.
 """
 
+import math
 from typing import Callable
 
 import pytest
@@ -201,3 +202,109 @@ def test_dot_product(a: float, b: float, dims: int):
     # Release
     vec_a.release()
     vec_b.release()
+
+
+@pytest.mark.parametrize(
+    "data,expected_l2,p,expected_lp",
+    [([3.0, 4.0], 5.0, 1.0, 7.0), ([10.0] * 64, 80.0, 2.0, 80.0)],
+)
+def test_norms(data: list[float], p: float, expected_l2: float, expected_lp: float):
+    # Initialization
+    vector = Vector(data)
+
+    # Assertions
+    assert vector.max() == max(data)
+    assert vector.l2() == expected_l2
+    assert vector.lp(p) == expected_lp
+
+    # Release
+    vector.release()
+
+
+@pytest.mark.parametrize(
+    "a,b,expected", [([4.0, 3.0], [2.0, 8.0], [16.0 / 17.0, 64.0 / 17.0])]
+)
+def test_projection(a: list[float], b: list[float], expected: list[float]):
+    # Initialize vectors
+    vec_a = Vector(a)
+    vec_b = Vector(b)
+    vec_expected = Vector(expected)
+
+    # Assertion
+    result = vec_a.projection(vec_b)
+    assert result == vec_expected
+
+    # Release
+    vec_a.release()
+    vec_b.release()
+    vec_expected.release()
+    result.release()
+
+
+@pytest.mark.parametrize(
+    "a,b,expected_rad,expected_deg", [([4.0, 0.0], [0.0, 8.0], math.pi / 2.0, 90.0)]
+)
+def test_angle(
+    a: list[float], b: list[float], expected_rad: float, expected_deg: float
+):
+    # Initialization
+    vec_a = Vector(a)
+    vec_b = Vector(b)
+
+    # Assertions
+    assert vec_a.angle_to(vec_b) == expected_rad
+    assert vec_a.angle_to(vec_b, unit="deg") == expected_deg
+
+    # Release
+    vec_a.release()
+    vec_b.release()
+
+
+@pytest.mark.parametrize(
+    "a,b,is_orthogonal,is_orthonormal",
+    [
+        ([4.0, 0.0], [0.0, 8.0], True, False),
+        ([1.0, 0.0], [0.0, 1.0], True, True),
+        ([1.4, 2.3], [8.23, 10.24], False, False),
+    ],
+)
+def test_ortho(
+    a: list[float], b: list[float], is_orthogonal: bool, is_orthonormal: bool
+):
+    # Initialization
+    vec_a = Vector(a)
+    vec_b = Vector(b)
+
+    # Assertions
+    assert vec_a.is_orthogonal(vec_b) == is_orthogonal
+    assert vec_a.is_orthonormal(vec_b) == is_orthonormal
+
+    # Release
+    vec_a.release()
+    vec_b.release()
+
+
+@pytest.mark.parametrize("a,b", [(-12.0, 241.023), (123.241, 241791.042)])
+@pytest.mark.parametrize("dims", [2, 10, 100, 100_000])
+def test_same_destination(a: float, b: float, dims: int):
+    # Initialization
+    vec_a = Vector([a] * dims)
+    vec_b = Vector([b] * dims)
+
+    with ShareDestionationVector(vec_a, vec_b) as dst:
+        # Assert initial condition
+        vec_dst = dst
+        assert Vector.has_shared_data(vec_dst, dst)
+
+        # Do some operations and check results
+        dst = vec_a + vec_b
+        dst = vec_a * vec_b
+        dst = vec_a**2
+
+    # Check final condition
+    assert Vector.has_shared_data(vec_dst, dst)
+
+    # Release
+    vec_a.release()
+    vec_b.release()
+    vec_dst.release()
