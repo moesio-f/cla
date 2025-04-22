@@ -45,15 +45,22 @@ To run, make the `libcla.so` findable by the executable (i.e., either update `LD
 
 ## Python API
 
-TODO
+The Python API provides an object-oriented approach for using the low-level C API. All features of the C API are exposed by the [`Vector`](pycla/core/vector.py) and [`Matrix`](pycla/core/matrix.py) classes. Some samples are available at [`samples`](samples) using Jupyter Notebooks. 
 
 # Build
 
-TODO
+The whole library can be built using the `make` targets defined on the [Makefile](Makefile). All you have to do is make the required libraries available on the system (i.e., install CUDA 12.8, Python 3.13, gcc/g++ 17, CMake 4.0.0) and install the Python libraries for development (i.e., [py-dev-requirements](py-dev-requirements.txt)). The table below describes the main targets that can be run with `make <target>`.
 
-## Requirements
+| Target | Description |
+| --- | --- |
+| `all` | Prepare and compile the `CLA` library and install the library (`.so`) in [`pycla.bin`](pycla/bin) |
+| `test` | Run all unit tests for `cla` and `pycla`. |
+| `release` | Run tests for `cla` and `pycla` and create release files (i.e., Python wheel and C zip file). |
+| `clean` | Utility target that removes the CMake build directory. |
+| `test-cla-memory-leak` | Runs Valgrind and CUDA compute sanitizer for memory leaks in the C API. |
+| `test-pycla` | Run tests for the Python API only. | 
 
-TODO
+
 
 # Architecture
 
@@ -85,7 +92,8 @@ The source code is organized as follows:
   - [`vector`](cla/vector): vector module;
   - [`cuda`](cla/cuda): CUDA management code;
 - [`pycla`](pycla): source code for the Python API;
-  - [`bin`](pycla/bin): binary directory for the `cla` shared library;
+  - [`bin`](pycla/bin): wrapper for the `cla` shared library;
+  - [`core`](pycla/core): core entities;
 
 ## `cla` library
 
@@ -111,10 +119,10 @@ The following diagram shows the module/package organization.
 ```mermaid
 flowchart TD
   core("<strong>Core Module</strong><br>Core entities.")
-  cuda("<strong>CUDA Module</strong><br>Utilities for CUDA operations.")
+  wrapper("<strong>CLA Module</strong><br>CLA wrapper with ctypes.")
 
   subgraph pycla
-  core -->|Uses| cuda
+  core -->|Uses| wrapper
   end
 ```
 
