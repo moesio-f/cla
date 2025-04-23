@@ -1,4 +1,5 @@
 extern "C" {
+#include "../include/constants.h"
 #include "../include/cuda_utils.h"
 #include "../include/entities.h"
 #include "../include/matrix_utils.h"
@@ -30,7 +31,7 @@ KernelLaunchParams get_vector_launch_parametes(CUDADevice *device,
                                                int vec_dims) {
   int max_threads = device->max_threads_per_block;
   int max_grid = device->max_grid_size_x;
-  int n = _find_n(vec_dims, 2, 16);
+  int n = _find_n(vec_dims, 2, KERNEL_LAUNCH_COEF);
 
   // Assert we have enough threads/blocks to compute
   //    and that those values fit the device capabilities
@@ -41,14 +42,14 @@ KernelLaunchParams get_vector_launch_parametes(CUDADevice *device,
   return {dim3(n), dim3(n)};
 }
 
-KernelLaunchParams get_maitrx_launch_parametes(CUDADevice *device, int mat_rows,
+KernelLaunchParams get_matrix_launch_parametes(CUDADevice *device, int mat_rows,
                                                int mat_columns) {
   int max_threads = device->max_threads_per_block;
   int max_grid_x = device->max_grid_size_x;
   int max_grid_y = device->max_grid_size_y;
   int max_threads_dim = (int)floor(sqrt(max_threads));
-  int n_x = _find_n(mat_rows, 2, 16);
-  int n_y = _find_n(mat_columns, 2, 16);
+  int n_x = _find_n(mat_rows, 2, KERNEL_LAUNCH_COEF);
+  int n_y = _find_n(mat_columns, 2, KERNEL_LAUNCH_COEF);
 
   // Assert we have enough threads/blocks to compute
   //    and that those values fit the device capabilities
@@ -139,7 +140,7 @@ extern "C" Matrix *cpu_gpu_conditional_apply_matrix_operator(
     cpu_op(a, b, dst);
   } else {
     KernelLaunchParams params =
-        get_maitrx_launch_parametes(dst->device, dst->rows, dst->columns);
+        get_matrix_launch_parametes(dst->device, dst->rows, dst->columns);
 
     // Launch the kernel with the cu_matrices
     gpu_op<<<params.n_blocks, params.n_threads>>>(a->cu_matrix, b->cu_matrix,
@@ -164,7 +165,7 @@ extern "C" Matrix *cpu_gpu_conditional_apply_scalar_matrix_operator(
   } else {
     CUDADevice *device = dst->device;
     KernelLaunchParams params =
-        get_maitrx_launch_parametes(device, dst->rows, dst->columns);
+        get_matrix_launch_parametes(device, dst->rows, dst->columns);
 
     // Allocate temporary memory for double
     double *cu_a = NULL;
