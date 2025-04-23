@@ -12,6 +12,7 @@ CLA_VALGRIND_SUPP := valgrind_cudart.supp
 PYCLA_DIST := dist
 PYCLA_TEST_DIR := test/python
 PYCLA_CLA_BIN := pycla/bin
+PYCLA_BUILD := build
 
 # Utility variables
 CUDA_COMPUTE_SANITIZER := /opt/cuda/extras/compute-sanitizer/compute-sanitizer
@@ -29,7 +30,7 @@ release: test pack-release-cla pack-release-pycla
 clean:
 	@echo "[Makefile] Clean project files..."
 	@rm -rf $(CLA_BUILD_PATH) $(CLA_BUILD_WIN_PATH) $(PYCLA_DIST)
-	@rm -rf $(PYCLA_DIST)
+	@rm -rf $(PYCLA_DIST) $(PYCLA_BUILD)
 	@rm -f $(PYCLA_CLA_BIN)/libcla.so*
 
 # Generate cla project files with Ninja
