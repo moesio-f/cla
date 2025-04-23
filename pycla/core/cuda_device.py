@@ -1,7 +1,7 @@
 from ctypes import POINTER
 from dataclasses import dataclass
 
-from pycla.bin.cla import CLA, _CUDADevice
+from pycla.bin.cla import CLA, _CUDADevice, _CUDAKernelLaunchParameters
 
 
 @dataclass(frozen=True)
@@ -14,6 +14,12 @@ class CUDADevice:
 
     def short_str(self) -> str:
         return f'CUDADevice(id={self.id}, name="{self.name}")'
+
+
+@dataclass(frozen=True)
+class KernelLaunchParameters:
+    n_threads: tuple[int, int, int]
+    n_blocks: tuple[int, int, int]
 
 
 class Devices:
@@ -57,6 +63,24 @@ class Devices:
     @property
     def has_cuda(self) -> bool:
         return self.count > 0
+
+    def get(self, key: int | str) -> CUDADevice:
+        return self[key]
+
+    def get_launch_parameters(
+        self, device: int | str | CUDADevice
+    ) -> KernelLaunchParameters:
+        params = self._get_pointer(device).contents.params
+        return KernelLaunchParameters(
+            n_threads=(params.n_threads_x, params.n_threads_y, params.n_threads_z),
+            n_blocks=(params.n_blocks_x, params.n_blocks_y, params.n_blocks_z),
+        )
+
+    def set_launch_parameters(
+        self, device: int | str | CUDADevice, params: KernelLaunchParameters
+    ):
+        dev = self._get_pointer(device).contents
+        dev.params = _CUDAKernelLaunchParameters(*params.n_threads, *params.n_blocks)
 
     def __len__(self) -> int:
         return self.count
