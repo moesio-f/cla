@@ -9,7 +9,7 @@ from typing import Callable
 import pytest
 
 from pycla import DEVICES, Vector
-from pycla.core import CUDADevice, ShareDestionationVector
+from pycla.core import CUDADevice, KernelLaunchParameters, ShareDestionationVector
 
 
 def _make_operation_fns(operation: str) -> tuple[Callable, Callable, Callable]:
@@ -308,3 +308,42 @@ def test_same_destination(a: float, b: float, dims: int):
     vec_a.release()
     vec_b.release()
     vec_dst.release()
+
+
+@pytest.mark.skipif(not DEVICES.has_cuda, reason="CUDA unavailable.")
+def test_custom_launch_parameters():
+    # Get first CUDA device
+    dev = DEVICES.get(0)
+
+    # Find device limits (i.e., grid and threads)
+    max_grid = dev.max_grid[0]
+    max_threads = dev.max_threads_per_block
+
+    # Choose a dimension that don't fit the default
+    #   algorithm, that is, a dimension whose number of
+    #   threads exceed the max allowed
+    # The default algorithm uses n_threads ~= sqrt(dims),
+    dims = 1 + max_threads**2
+
+    # Configure launch parameters
+    n_threads = max_threads
+    n_blocks = int(1 + math.ceil(dims / n_threads))
+    assert n_threads * n_blocks >= dims
+    DEVICES.set_launch_parameters(
+        dev,
+        KernelLaunchParameters(n_threads=(n_threads, 0, 0), n_blocks=(n_blocks, 0, 0)),
+    )
+
+    # However, we must guarantee that we have enough
+    #   blocks to fit the problem
+    assert n_blocks <= max_grid
+
+    # Create vector on GPU
+    vector = Vector([1.0] * dims).to(dev)
+
+    # Do operation
+    result = vector + vector
+
+    # Release
+    vector.release()
+    result.release()
