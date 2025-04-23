@@ -86,11 +86,11 @@ KernelLaunchParams get_vector_launch_parametes(CUDADevice *device,
       n_blocks = device->params.n_blocks_x;
     } else {
       // Warn user about fallback
-      printf(
-          RED
-          "[CLA] Device (id=%d, name='%s') has parameters set, but they "
-          "are not compatible with either GPU/Problem. Using fallback." RESET,
-          device->id, device->name);
+      printf(RED
+             "[CLA] Device (id=%d, name='%s') has parameters set, but they "
+             "are not compatible with either GPU/Problem. Using fallback." RESET
+             "\n",
+             device->id, device->name);
     }
   }
 
@@ -127,11 +127,11 @@ KernelLaunchParams get_matrix_launch_parametes(CUDADevice *device, int mat_rows,
       n_blocks_y = device->params.n_blocks_y;
     } else {
       // Warn user about fallback
-      printf(
-          RED
-          "[CLA] Device (id=%d, name='%s') has parameters set, but they "
-          "are not compatible with either GPU/Problem. Using fallback." RESET,
-          device->id, device->name);
+      printf(RED
+             "[CLA] Device (id=%d, name='%s') has parameters set, but they "
+             "are not compatible with either GPU/Problem. Using fallback." RESET
+             "\n",
+             device->id, device->name);
     }
   }
 
