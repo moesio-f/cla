@@ -9,7 +9,7 @@ from typing import Callable
 import pytest
 
 from pycla import DEVICES, Matrix
-from pycla.core import CUDADevice, ShareDestionationMatrix
+from pycla.core import CUDADevice, ShareDestionationMatrix, KernelLaunchParameters
 
 
 def _make_operation_fns(operation: str) -> tuple[Callable, Callable, Callable]:
@@ -242,3 +242,34 @@ def test_same_destination(a: float, b: float, dims: int):
     mat_a.release()
     mat_b.release()
     mat_dst.release()
+
+
+@pytest.mark.skipif(not DEVICES.has_cuda, reason="CUDA unavailable.")
+def test_custom_launch_parameters():
+    # TODO: automatically set break dimension,
+    #   the current values assume a GTX 1650 GPU
+    # Get first CUDA device
+    dev = DEVICES.get(0)
+    rows = 1000
+    columns = 100
+    DEVICES.set_launch_parameters(
+        dev,
+        KernelLaunchParameters(
+            n_threads=(32, 32, 0),
+            n_blocks=(
+                int(1 + math.ceil(rows / 32)),
+                int(1 + math.ceil(columns / 32)),
+                0,
+            ),
+        ),
+    )
+
+    # Create vector on GPU
+    matrix = Matrix([[1.0] * 100] * 1000).to(dev)
+
+    # Do operation
+    result = matrix + matrix
+
+    # Release
+    matrix.release()
+    result.release()

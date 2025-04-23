@@ -15,7 +15,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define N_TESTS 25
+#define N_TESTS 26
 
 // Utility enumeration for custom error codes
 typedef enum { SUCCESS, FAILED } RETURN_CODE;
@@ -516,6 +516,45 @@ RETURN_CODE test_matrix_move_cuda_cpu() {
   return SUCCESS;
 }
 
+RETURN_CODE test_user_kernel_launch() {
+  _TESTS_RUN++;
+  if (!has_cuda()) {
+    _TESTS_PASSED++;
+    return SUCCESS;
+  }
+
+  RETURN_CODE code = FAILED;
+
+  // Get first device
+  CUDADevice *device = get_device_by_id(0);
+
+  // Create vector on GPU
+  Vector *a = const_vector(100, 1.0, device);
+  Vector *target = const_vector(100, 4.0, device);
+
+  // Run operation with unsupported parameters
+  device->params.n_threads_x = 1;
+  device->params.n_blocks_x = 1;
+  vector_add(a, a, a);
+
+  // Run operation with supported parameters
+  device->params.n_threads_x = 100;
+  device->params.n_blocks_x = 1;
+  vector_add(a, a, a);
+
+  // Check equality
+  if (!vector_equals(a, target)) {
+    code = SUCCESS;
+    _TESTS_PASSED++;
+  }
+
+  // Clean-up
+  destroy_vector(a);
+  destroy_vector(target);
+
+  return code;
+}
+
 int main() {
   // Initialize default CUDA device
   if (has_cuda()) {
@@ -546,7 +585,8 @@ int main() {
                                            &test_matrix_add_cuda,
                                            &test_matrix_sub_cuda,
                                            &test_matrix_mult_cuda,
-                                           &test_vector_copy};
+                                           &test_vector_copy,
+                                           &test_user_kernel_launch};
   char names[N_TESTS][50] = {"test_vector_add_cpu",
                              "test_vector_sub_cpu",
                              "test_vector_element_wise_prod_cpu",
@@ -571,7 +611,8 @@ int main() {
                              "test_matrix_add_cuda",
                              "test_matrix_sub_cuda",
                              "test_matrix_mult_cuda",
-                             "test_vector_copy"};
+                             "test_vector_copy",
+                             "test_user_kernel_launch"};
 
   printf(PREFIX "Tests started...\n");
   for (int i = 0; i < N_TESTS; i++) {

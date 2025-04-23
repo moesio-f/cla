@@ -9,5 +9,6 @@
 
 extern const double D_TOL;
 extern const int STR_SIZE;
+extern const int KERNEL_LAUNCH_COEF;
 
 #endif

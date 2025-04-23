@@ -19,6 +19,22 @@ typedef enum {
 } Vector2MatrixStrategy;
 
 /**
+ * Represents the Kernel Launch parameters
+ *  to be used by a given device. Positive
+ *  values are valid, while zero or negative
+ *  means that the default algorithm should
+ *  be used instead.
+ * */
+typedef struct {
+  int n_threads_x; /** Number of threads in x-dim. */
+  int n_threads_y; /** Number of threads in y-dim. */
+  int n_threads_z; /** Number of threads in z-dim. */
+  int n_blocks_x;  /** Number of blocks in x-dim. */
+  int n_blocks_y;  /** Number of blocks in y-dim. */
+  int n_blocks_z;  /** Number of blocks in z-dim. */
+} CUDAKernelLaunchParameters;
+
+/**
  * Represents a CUDA-capable device.
  * */
 typedef struct {
@@ -27,10 +43,12 @@ typedef struct {
   int max_grid_size_x;       /** Maximum size of x dimension of a grid. */
   int max_grid_size_y;       /** Maximum size of y dimension of a grid. */
   int max_grid_size_z;       /** Maximum size of z dimension of a grid. */
-  int max_block_size_x;     /** Maximum size of x dimension of a block. */
-  int max_block_size_y;     /** Maximum size of y dimension of a block. */
-  int max_block_size_z;     /** Maximum size of z dimension of a block. */
+  int max_block_size_x;      /** Maximum size of x dimension of a block. */
+  int max_block_size_y;      /** Maximum size of y dimension of a block. */
+  int max_block_size_z;      /** Maximum size of z dimension of a block. */
   int max_threads_per_block; /** Maximum number of threads per block. */
+  CUDAKernelLaunchParameters
+      params; /** Launch parameters to be used by this device. */
 } CUDADevice;
 
 /**

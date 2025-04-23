@@ -31,15 +31,17 @@ extern "C" void populate_devices() {
       cudaGetDeviceProperties(&prop, i);
       char *name = (char *)malloc(sizeof(char) * 256);
       strcpy(name, prop.name);
-      DEVICES->devices[i] = (CUDADevice){i,
-                                         name,
-                                         prop.maxGridSize[0],
-                                         prop.maxGridSize[1],
-                                         prop.maxGridSize[2],
-                                         prop.maxThreadsDim[0],
-                                         prop.maxThreadsDim[1],
-                                         prop.maxThreadsDim[2],
-                                         prop.maxThreadsPerBlock};
+      DEVICES->devices[i] =
+          (CUDADevice){i,
+                       name,
+                       prop.maxGridSize[0],
+                       prop.maxGridSize[1],
+                       prop.maxGridSize[2],
+                       prop.maxThreadsDim[0],
+                       prop.maxThreadsDim[1],
+                       prop.maxThreadsDim[2],
+                       prop.maxThreadsPerBlock,
+                       (CUDAKernelLaunchParameters){0, 0, 0, 0, 0, 0}};
     }
   }
 }

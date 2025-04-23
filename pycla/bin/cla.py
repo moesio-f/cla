@@ -3,6 +3,17 @@ from importlib import resources
 from pathlib import Path
 
 
+class _CUDAKernelLaunchParameters(Structure):
+    _fields_ = [
+        ("n_threads_x", c_int),
+        ("n_threads_y", c_int),
+        ("n_threads_z", c_int),
+        ("n_blocks_x", c_int),
+        ("n_blocks_y", c_int),
+        ("n_blocks_z", c_int),
+    ]
+
+
 class _CUDADevice(Structure):
     _fields_ = [
         ("id", c_int),
@@ -14,6 +25,7 @@ class _CUDADevice(Structure):
         ("max_block_size_y", c_int),
         ("max_block_size_z", c_int),
         ("max_threads_per_block", c_int),
+        ("params", _CUDAKernelLaunchParameters),
     ]
 
 
