@@ -183,9 +183,6 @@ extern "C" Vector *cpu_gpu_conditional_apply_vector_operator(
     // Launch the kernel with the cu_vectors
     gpu_op<<<params.n_blocks, params.n_threads>>>(a->cu_vector, b->cu_vector,
                                                   dst->cu_vector);
-
-    // Synchronize CUDA devices
-    cudaDeviceSynchronize();
   }
 
   // Return dst
@@ -215,9 +212,6 @@ Vector *cpu_gpu_conditional_apply_scalar_vector_operator(
     // Launch the kernel with the cu_vectors
     gpu_op<<<params.n_blocks, params.n_threads>>>(cu_a, b->cu_vector,
                                                   dst->cu_vector);
-
-    // Synchronize CUDA devices
-    cudaDeviceSynchronize();
 
     // Deallocate memory
     cudaFree(cu_a);
@@ -249,9 +243,6 @@ extern "C" Matrix *cpu_gpu_conditional_apply_matrix_operator(
     // Launch the kernel with the cu_matrices
     gpu_op<<<params.n_blocks, params.n_threads>>>(a->cu_matrix, b->cu_matrix,
                                                   dst->cu_matrix);
-
-    // Synchronize CUDA devices
-    cudaDeviceSynchronize();
   }
 
   // Return dst
@@ -282,9 +273,6 @@ extern "C" Matrix *cpu_gpu_conditional_apply_scalar_matrix_operator(
     // Launch the kernel with the cu_matrices
     gpu_op<<<params.n_blocks, params.n_threads>>>(cu_a, b->cu_matrix,
                                                   dst->cu_matrix);
-
-    // Synchronize CUDA devices
-    cudaDeviceSynchronize();
 
     // Deallocate memory
     cudaFree(cu_a);

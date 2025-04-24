@@ -13,6 +13,12 @@ extern AvailableCUDADevices
     *DEVICES; /** Global variable with available CUDA devices. */
 
 /**
+ * Synchronize all CUDA devices (i.e.,
+ *  finish all kernels before proceeding).
+ * */
+void synchronize_devices();
+
+/**
  * Populates the `DEVICES` global variable.
  * If is already populated, silently ignores.
  * This function is automatically called whenever
@@ -28,13 +34,13 @@ void populate_devices();
  * */
 void clear_devices();
 
-/** 
+/**
  * Returns whether the system has any CUDA
  *  capable device.
  * */
-bool has_cuda(); 
+bool has_cuda();
 
-/** 
+/**
  * Returns the number of CUDA devices.
  * */
 int cuda_get_device_count();
