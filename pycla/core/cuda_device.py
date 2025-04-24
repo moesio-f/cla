@@ -64,6 +64,9 @@ class Devices:
     def has_cuda(self) -> bool:
         return self.count > 0
 
+    def synchronize(self):
+        CLA.synchronize_devices()
+
     def get(self, key: int | str) -> CUDADevice:
         return self[key]
 

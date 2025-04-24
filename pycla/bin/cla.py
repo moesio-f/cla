@@ -88,6 +88,9 @@ class _CLA:
     def has_cuda(self) -> bool:
         return self._lib.has_cuda()
 
+    def synchronize_devices(self):
+        self._lib.synchronize_devices()
+
     def get_device_by_id(self, id: int) -> POINTER(_CUDADevice):
         return self._lib.get_device_by_id(id)
 
@@ -221,6 +224,7 @@ class _CLA:
 
     def _set_functions_types(self):
         self._lib.has_cuda.restype = c_bool
+        self._lib.synchronize_devices.restype = None
         self._lib.get_device_by_id.restype = POINTER(_CUDADevice)
         self._lib.get_device_by_name.restype = POINTER(_CUDADevice)
         self._lib.vector_to_cu.restype = POINTER(_Vector)

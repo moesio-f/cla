@@ -9,6 +9,8 @@ extern "C" {
 
 #include "cuda_runtime_api.h"
 
+extern "C" void synchronize_devices() { cudaDeviceSynchronize(); }
+
 extern "C" void populate_devices() {
   if (DEVICES != NULL) {
     return;
