@@ -174,3 +174,6 @@ cuda_runtime_api.h
 
 # .def finles
 *.def
+
+# CSV files
+*.csv

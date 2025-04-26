@@ -39,7 +39,11 @@ add_executable(test_suite ../test/c/suite.c)
 add_executable(memory_leak ../test/c/memory_leak.c)
 add_executable(memory_stability ../test/c/memory_stability.c)
 
+# Add benchmark target
+add_executable(cla_cuda_benchmark ../benchmark/cla_cuda_benchmark.cu)
+
 # Link library to executable
 target_link_libraries(test_suite PRIVATE ${CMAKE_PROJECT_NAME})
 target_link_libraries(memory_leak PRIVATE ${CMAKE_PROJECT_NAME})
 target_link_libraries(memory_stability PRIVATE ${CMAKE_PROJECT_NAME})
+target_link_libraries(cla_cuda_benchmark PRIVATE ${CMAKE_PROJECT_NAME})
