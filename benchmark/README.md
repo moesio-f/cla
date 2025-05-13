@@ -1,7 +1,7 @@
 # Benchmark `pycla`/`cla` vs Pure Python 
 
 > [!NOTE]  
-> Matrices operation in GPU have not been included due to the pending investigation of [#31](https://github.com/moesio-f/cla/issues/31).
+> It is important to note that the basic operations are not well suited for GPU, the results show that the CPU has superior performance for trivial operations (See [#31](https://github.com/moesio-f/cla/issues/31)). A new benchmark methodology to compare CPU vs GPU is out of the scope for now.
 
 > [!WARNING]  
 > The results should be interpreted as **relative** (i.e., CPU/GPU time is hardware-dependent). Therefore, the percentage change between approaches should be fairly hardware-independent given the same conditions (e.g., launch parameters, number of dimensions, vector/matrix values).
