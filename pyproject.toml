@@ -7,13 +7,16 @@ name = "pycla"
 version = "1.2.1"
 readme = "README.md"
 description = "CLA is a simple toy library for basic vector/matrix operations written C + CUDA with a Python API."
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: GPU :: NVIDIA CUDA :: 12",
     "Operating System :: POSIX :: Linux",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: C",
 ]
 keywords = [ "linear algebra", "vector", "matrix", "c", "ctypes", "cuda", "gpu" ]

@@ -53,9 +53,7 @@ _Matrix._fields_ = [
 ]
 
 
-def _get_latest_binary(
-    root: resources.abc.Traversable, lib_name: str
-) -> resources.abc.Traversable:
+def _get_latest_binary(root, lib_name: str):
     files = [p for p in root.iterdir() if p.is_file() and p.name.startswith(lib_name)]
     return sorted(files, reverse=True)[0]
 

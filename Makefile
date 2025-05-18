@@ -82,7 +82,9 @@ copy-cla-bin-pycla:
 # Test pycla
 test-pycla:
 	@echo "[Makefile] Testing pycla..."
-	@pytest -x $(PYCLA_TEST_DIR) 
+	@pytest -x $(PYCLA_TEST_DIR)
+	@echo "[Makefile] Testing older Python versions..."
+	@python ./tools/ensure_compatibility.py
 
 # Publish pycla
 publish-pycla:
