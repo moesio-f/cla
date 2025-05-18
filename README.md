@@ -15,6 +15,10 @@
   <a href="#architecture">Architecture</a>
 </p>
 
+[![Python](https://img.shields.io/pypi/pyversions/pycla.svg)](https://badge.fury.io/py/pycla)
+[![PyPI](https://badge.fury.io/py/pycla.svg)](https://badge.fury.io/py/pycla)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/moesio-f/cla/blob/main/examples/intro.ipynb)
+
 CLA is a simple toy library for basic vector/matrix operations in C. This project main goal is to learn the foundations of [CUDA](https://docs.nvidia.com/cuda/), and Python bindings, using [`ctypes`](https://docs.python.org/3/library/ctypes.html) as a wrapper, through simple Linear Algebra operations (additions, subtraction, multiplication, broadcasting, etc). 
 
 
