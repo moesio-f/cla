@@ -1,8 +1,8 @@
 <h1 align="center">
   <div style="display: flex; justify-content: space-between;">
-  <a><img src="https://upload.wikimedia.org/wikipedia/commons/1/19/C_Logo.png" alt="C logo" height="80"></a>
-  <a><img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" alt="Python logo" height="80"></a>
-  <a><img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Nvidia_CUDA_Logo.jpg" alt="CUDA logo" height="80"></a>
+  <a><img src="https://upload.wikimedia.org/wikipedia/commons/1/19/C_Logo.png" alt="C logo"style="height: 80px;"></a>
+  <a><img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" alt="Python logo" style="height: 80px;"></a>
+  <a><img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Nvidia_CUDA_Logo.jpg" alt="CUDA logo" style="height: 80px;"></a>
   </div>
   C Linear Algebra (CLA) Library
   <br>
